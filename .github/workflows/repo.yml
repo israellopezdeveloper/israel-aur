@@ -75,8 +75,6 @@ jobs:
             echo "Firmando: $pkg"
             gpg --batch --yes --no-tty \
               --local-user "$GPG_KEYID" \
-              --pinentry-mode loopback \
-              --passphrase '$GPG_PASSPHRASE' \
               --detach-sign --armor "$pkg"
           done
           if [ "$any" -eq 0 ]; then

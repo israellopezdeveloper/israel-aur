@@ -20,7 +20,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pacman -Sy --noconfirm gnupg base-devel git
+          pacman -Sy --noconfirm gnupg base-devel git ca-certificates update-ca-trust
 
       - name: Import GPG key
         env:

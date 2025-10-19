@@ -74,7 +74,7 @@ jobs:
               continue
             fi
             echo "Firmando: $pkg"
-            gpg --detach-sign --no-tty --default-key "Israel Lopez" "$pkg"
+            gpg --detach-sign --no-tty --pinentry-mode loopback  --default-key "Israel Lopez" "$pkg"
           done
           if [ "$any" -eq 0 ]; then
             echo "No hay paquetes en x86_64/. Nada que firmar."

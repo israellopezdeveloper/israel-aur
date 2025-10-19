@@ -60,6 +60,7 @@ jobs:
       - name: Sign any unsigned packages
         env:
           GPG_KEYID: ${{ secrets.GPG_KEYID }}
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
         run: |
           set -euo pipefail
 
@@ -75,7 +76,7 @@ jobs:
             gpg --batch --yes --no-tty \
               --local-user "$GPG_KEYID" \
               --pinentry-mode loopback \
-              --passphrase '' \
+              --passphrase '$GPG_PASSPHRASE' \
               --detach-sign --armor "$pkg"
           done
           if [ "$any" -eq 0 ]; then

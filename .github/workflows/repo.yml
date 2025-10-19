@@ -1,0 +1,83 @@
+name: Build & Sign Arch Repo
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - "x86_64/**"
+      - ".github/workflows/repo.yml"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: archlinux:base
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install dependencies
+        run: |
+          pacman -Sy --noconfirm gnupg base-devel
+
+      - name: Import GPG key
+        env:
+          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+        run: |
+          mkdir -p ~/.gnupg
+          chmod 700 ~/.gnupg
+          echo "$GPG_PRIVATE_KEY" | gpg --import
+          echo "use-agent" >> ~/.gnupg/gpg.conf
+          echo "pinentry-mode loopback" >> ~/.gnupg/gpg.conf
+          echo "allow-loopback-pinentry" >> ~/.gnupg/gpg-agent.conf
+          gpgconf --kill gpg-agent
+
+      - name: Sign any unsigned packages
+        working-directory: x86_64
+        run: |
+          set -euo pipefail
+          for pkg in *.pkg.tar.*; do
+            [[ -f "${pkg}.sig" ]] && continue
+            echo "Firmando: $pkg"
+            gpg --detach-sign --armor "$pkg"
+          done
+
+      - name: Rebuild signed repo database
+        working-directory: x86_64
+        env:
+          REPO_NAME: israrepo
+          GPG_KEYID: ${{ secrets.GPG_KEYID }}
+        run: |
+          set -euo pipefail
+
+          rm -f "${REPO_NAME}.db"* "${REPO_NAME}.files"* || true
+          repo-add -s -k "${GPG_KEYID}" -R "${REPO_NAME}.db.tar.gz" ./*.pkg.tar.*
+
+          # Copias planas sin symlinks
+          cp "${REPO_NAME}.db.tar.gz" "${REPO_NAME}.db"
+          cp "${REPO_NAME}.files.tar.gz" "${REPO_NAME}.files"
+
+          cat > index.html <<'HTML'
+          <!doctype html>
+          <meta charset="utf-8">
+          <title>Arch Repo</title>
+          <h1>Arch Repo</h1>
+          <ul>
+            $(for f in *; do echo "<li><a href='$f'>$f</a></li>"; done)
+          </ul>
+          HTML
+
+      - name: Commit & push if changed
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if ! git diff --quiet; then
+            git add -A
+            git commit -m "Update signed repo database"
+            git push
+          else
+            echo "No changes to commit."
+          fi
+

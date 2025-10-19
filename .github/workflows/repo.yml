@@ -59,7 +59,7 @@ jobs:
 
       - name: Sign any unsigned packages
         env:
-          GPG_KEYID: ${{ env.GPG_KEYID }}
+          GPG_KEYID: ${{ secrets.GPG_KEYID }}
         run: |
           echo "---->${GPG_KEYID}"
           set -euo pipefail

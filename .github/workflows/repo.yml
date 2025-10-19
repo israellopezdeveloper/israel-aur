@@ -63,9 +63,9 @@ jobs:
         run: |
           set -euo pipefail
 
-          whoami
-          echo "allow-loopback-pinentry" >> ~/.gnupg/gpg-agent.conf
-          gpgconf --reload gpg-agent
+          mkdir -p ~/.gnupg && chmod 700 ~/.gnupg
+          grep -qxF 'allow-loopback-pinentry' ~/.gnupg/gpg-agent.conf || echo 'allow-loopback-pinentry' >> ~/.gnupg/gpg-agent.conf
+          gpgconf --kill gpg-agent
           any=0
           for pkg in x86_64/*.pkg.tar.*; do
             [ -e "$pkg" ] || continue   # si el glob no matchea, sigue
@@ -77,6 +77,8 @@ jobs:
             echo "Firmando: $pkg"
             gpg --batch --yes --no-tty \
               --local-user "$GPG_KEYID" \
+              --pinentry-mode loopback \
+              --passphrase '' \
               --detach-sign --armor "$pkg"
           done
           if [ "$any" -eq 0 ]; then

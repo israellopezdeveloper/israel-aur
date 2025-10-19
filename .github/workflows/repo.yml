@@ -51,15 +51,28 @@ jobs:
           # Verificación
           gpg --batch --no-tty --list-secret-keys
 
-      - name: Sign any unsigned packages
-        working-directory: x86_64
+      - name: Ensure repo dir
         run: |
           set -euo pipefail
-          for pkg in *.pkg.tar.*; do
-            [[ -f "${pkg}.sig" ]] && continue
+          mkdir -p x86_64
+
+      - name: Sign any unsigned packages
+        run: |
+          set -euo pipefail
+          any=0
+          for pkg in x86_64/*.pkg.tar.*; do
+            [ -e "$pkg" ] || continue   # si el glob no matchea, sigue
+            any=1
+            if [ -f "${pkg}.sig" ]; then
+              echo "Ya firmado: $pkg"
+              continue
+            fi
             echo "Firmando: $pkg"
-            gpg --detach-sign --armor "$pkg"
+            gpg --batch --yes --no-tty --pinentry-mode loopback --detach-sign --armor "$pkg"
           done
+          if [ "$any" -eq 0 ]; then
+            echo "No hay paquetes en x86_64/. Nada que firmar."
+          fi
 
       - name: Rebuild signed repo database
         working-directory: x86_64
@@ -69,21 +82,33 @@ jobs:
         run: |
           set -euo pipefail
 
-          rm -f "${REPO_NAME}.db"* "${REPO_NAME}.files"* || true
-          repo-add -s -k "${GPG_KEYID}" -R "${REPO_NAME}.db.tar.gz" ./*.pkg.tar.*
+          # ¿hay algún paquete?
+          count=$(ls -1 x86_64/*.pkg.tar.* 2>/dev/null | wc -l || true)
+          if [ "$count" -eq 0 ]; then
+            echo "No hay paquetes; se omite reconstrucción de la DB."
+            exit 0
+          fi
 
-          # Copias planas sin symlinks
-          cp "${REPO_NAME}.db.tar.gz" "${REPO_NAME}.db"
-          cp "${REPO_NAME}.files.tar.gz" "${REPO_NAME}.files"
+          # limpiamos DB previa y reconstruimos firmada
+          rm -f "x86_64/${REPO_NAME}.db"* "x86_64/${REPO_NAME}.files"* || true
+          repo-add -s -k "$GPG_KEYID" -R "x86_64/${REPO_NAME}.db.tar.gz" x86_64/*.pkg.tar.*
 
-          cat > index.html <<'HTML'
-          <!doctype html>
-          <meta charset="utf-8">
-          <title>Arch Repo</title>
-          <h1>Arch Repo</h1>
-          <ul>
-            $(for f in *; do echo "<li><a href='$f'>$f</a></li>"; done)
+          # copias planas (evitar symlinks en Pages)
+          cp "x86_64/${REPO_NAME}.db.tar.gz"    "x86_64/${REPO_NAME}.db"
+          cp "x86_64/${REPO_NAME}.files.tar.gz" "x86_64/${REPO_NAME}.files"
+
+          # índice html opcional
+          cat > x86_64/index.html <<'HTML'
+          <!doctype html><meta charset="utf-8"><title>Arch Repo</title>
+          <h1>Arch Repo</h1><ul>
+          <!-- listado simple -->
           </ul>
+          <script>
+            fetch('.').then(r=>r.text()).then(t=>{
+              const a=[...t.matchAll(/href="([^"]+)"/g)].map(m=>m[1]);
+              document.querySelector('ul').innerHTML=a.map(h=>`<li><a href="${h}">${h}</a></li>`).join('');
+            });
+          </script>
           HTML
 
       - name: Commit & push if changed

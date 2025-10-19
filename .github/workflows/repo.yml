@@ -63,9 +63,6 @@ jobs:
         run: |
           set -euo pipefail
 
-          mkdir -p ~/.gnupg && chmod 700 ~/.gnupg
-          grep -qxF 'allow-loopback-pinentry' ~/.gnupg/gpg-agent.conf || echo 'allow-loopback-pinentry' >> ~/.gnupg/gpg-agent.conf
-          gpgconf --kill gpg-agent
           any=0
           for pkg in x86_64/*.pkg.tar.*; do
             [ -e "$pkg" ] || continue   # si el glob no matchea, sigue

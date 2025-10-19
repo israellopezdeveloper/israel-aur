@@ -13,14 +13,14 @@ jobs:
     container:
       image: archlinux:base
     steps:
+      - name: Install dependencies
+        run: |
+          pacman -Sy --noconfirm gnupg base-devel git ca-certificates ca-certificates-utils
+
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
-      - name: Install dependencies
-        run: |
-          pacman -Sy --noconfirm gnupg base-devel git ca-certificates ca-certificates-utils
 
       - name: Import GPG key
         env:

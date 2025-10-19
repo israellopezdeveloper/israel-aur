@@ -26,13 +26,30 @@ jobs:
         env:
           GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
         run: |
+          set -euo pipefail
           mkdir -p ~/.gnupg
           chmod 700 ~/.gnupg
-          echo "$GPG_PRIVATE_KEY" | gpg --import
+
+          # Configurar gpg para CI sin TTY
           echo "use-agent" >> ~/.gnupg/gpg.conf
           echo "pinentry-mode loopback" >> ~/.gnupg/gpg.conf
           echo "allow-loopback-pinentry" >> ~/.gnupg/gpg-agent.conf
-          gpgconf --kill gpg-agent
+
+          # Asegura que existe pinentry y el agente puede arrancar
+          pacman -Sy --noconfirm pinentry
+          gpgconf --kill gpg-agent || true
+          gpgconf --launch gpg-agent
+
+          # Importar desde archivo (evita ioctl issues con stdin)
+          KEYFILE="$(mktemp)"
+          printf '%s' "$GPG_PRIVATE_KEY" > "$KEYFILE"
+          chmod 600 "$KEYFILE"
+
+          gpg --batch --yes --no-tty --pinentry-mode loopback --import "$KEYFILE"
+          rm -f "$KEYFILE"
+
+          # Verificación
+          gpg --batch --no-tty --list-secret-keys
 
       - name: Sign any unsigned packages
         working-directory: x86_64

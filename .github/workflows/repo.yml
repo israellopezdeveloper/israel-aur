@@ -75,7 +75,6 @@ jobs:
             gpg --batch --yes --no-tty \
               --pinentry-mode loopback \
               --local-user "$GPG_KEYID" \
-              --passphrase '' \
               --detach-sign --armor "$pkg"
           done
           if [ "$any" -eq 0 ]; then

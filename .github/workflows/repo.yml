@@ -112,14 +112,20 @@ jobs:
           HTML
 
       - name: Commit & push if changed
+        working-directory: ${{ github.workspace }}
         run: |
-          git config user.name  "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          if ! git diff --quiet; then
+          set -euo pipefail
+          git config --global user.name  "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+          echo "Ubicación actual: $(pwd)"
+          echo "Archivos modificados:"
+          git status --short || true
+
+          if ! git diff --quiet || ! git diff --cached --quiet; then
             git add -A
             git commit -m "Update signed repo database"
             git push
           else
             echo "No changes to commit."
           fi
-

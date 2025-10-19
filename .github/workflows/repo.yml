@@ -61,6 +61,7 @@ jobs:
         env:
           GPG_KEYID: ${{ secrets.GPG_KEYID }}
         run: |
+          echo "---->${GPG_KEYID}"
           set -euo pipefail
           any=0
           for pkg in x86_64/*.pkg.tar.*; do

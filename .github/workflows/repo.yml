@@ -69,7 +69,11 @@ jobs:
               continue
             fi
             echo "Firmando: $pkg"
-            gpg --batch --yes --no-tty --pinentry-mode loopback --detach-sign --armor "$pkg"
+            gpg --batch --yes --no-tty \
+              --pinentry-mode loopback \
+              --local-user "$GPG_KEYID" \
+              --passphrase '' \
+              --detach-sign --armor "$pkg"
           done
           if [ "$any" -eq 0 ]; then
             echo "No hay paquetes en x86_64/. Nada que firmar."

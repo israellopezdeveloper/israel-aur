@@ -62,6 +62,9 @@ jobs:
           GPG_KEYID: ${{ secrets.GPG_KEYID }}
         run: |
           set -euo pipefail
+
+          echo "allow-loopback-pinentry" >> ~/.gnupg/gpg-agent.conf
+          gpgconf --reload gpg-agent
           any=0
           for pkg in x86_64/*.pkg.tar.*; do
             [ -e "$pkg" ] || continue   # si el glob no matchea, sigue
@@ -86,9 +89,6 @@ jobs:
           GPG_KEYID: ${{ secrets.GPG_KEYID }}
         run: |
           set -euo pipefail
-
-          echo "allow-loopback-pinentry" >> ~/.gnupg/gpg-agent.conf
-          gpgconf --reload gpg-agent
 
           # ¿hay algún paquete?
           count=$(ls -1 x86_64/*.pkg.tar.* 2>/dev/null | wc -l || true)

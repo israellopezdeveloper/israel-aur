@@ -58,6 +58,8 @@ jobs:
           mkdir -p x86_64
 
       - name: Sign any unsigned packages
+        env:
+          GPG_KEYID: ${{ secrets.GPG_KEYID }}
         run: |
           set -euo pipefail
           any=0

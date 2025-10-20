@@ -79,6 +79,28 @@ jobs:
 
           ls -lisah x86_64
 
+      - name: Commit & push if changed
+        working-directory: ${{ github.workspace }}
+        env:
+          GITHUB_WORKSPACE: ${{ github.workspace }}
+        run: |
+          set -euo pipefail
+          ls -lisah
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git config --global user.name  "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+          echo "Ubicación actual: $(pwd)"
+          echo "Archivos modificados:"
+          git status --short || true
+
+          if ! git diff --quiet || ! git diff --cached --quiet; then
+            git add -A
+            git commit -m "Update signed repo database"
+            git push
+          else
+            echo "No changes to commit."
+          fi
 
 
 

@@ -84,12 +84,25 @@ jobs:
 
           ls -lisah x86_64
 
+      - name: Set SSH
+        env:
+          REPO_NAME: israrepo
+          DEPLOY_KEY_PRIV: ${{ secrets.DEPLOY_KEY_PRIV }}
+          DEPLOY_KEY_PUB: ${{ secrets.DEPLOY_KEY_PUB }}
+        run: |
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          echo "${DEPLOY_KEY_PRIV}" > ~/.ssh/id_ed25519
+          echo "${DEPLOY_KEY_PUB}" > ~/.ssh/id_ed25519.pub
+          chmod 600 ~/.ssh/id_ed25519 || true
+          chmod 644 ~/.ssh/id_ed25519.pub || true
+          ssh-keyscan -t rsa,ecdsa,ed25519 github.com >> ~/.ssh/known_hosts
+
       - name: Commit & push if changed
         env:
           GITHUB_WORKSPACE: ${{ github.workspace }}
         run: |
           pwd
-          ls -lisah
+          ls -lisah x86_64
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           git config --global user.name  "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"

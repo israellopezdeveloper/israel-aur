@@ -15,6 +15,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
       - name: Import GPG key
         uses: crazy-max/ghaction-import-gpg@v6
         with:
@@ -85,6 +88,7 @@ jobs:
           GITHUB_WORKSPACE: ${{ github.workspace }}
         run: |
           pacman -Sy --noconfirm git
+          pwd
           ls -lisah
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           git config --global user.name  "github-actions[bot]"

@@ -38,7 +38,7 @@ jobs:
           for pkg in x86_64/*.pkg.tar.*; do
             [ -e "$pkg" ] || continue   # si el glob no matchea, sigue
             any=1
-            if [[ "${pkg}" == sig* ]]; then
+            if [[ "${pkg}" == *sig ]]; then
               continue
             fi
             if [ -f "${pkg}.sig" ]; then

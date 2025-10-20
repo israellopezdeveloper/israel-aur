@@ -42,7 +42,6 @@ jobs:
           ls -l x86_64
 
       - name: Rebuild signed repo database
-        working-directory: x86_64
         env:
           REPO_NAME: israrepo
           GPG_KEYID: ${{ secrets.GPG_KEYID }}

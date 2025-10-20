@@ -13,6 +13,8 @@ jobs:
     container:
       image: archlinux:latest
     steps:
+      - name: Install git
+        run: pacman -Sy --noconfirm git
       - name: Checkout
         uses: actions/checkout@v4
         with:
@@ -83,11 +85,9 @@ jobs:
           ls -lisah x86_64
 
       - name: Commit & push if changed
-        working-directory: ${{ github.workspace }}
         env:
           GITHUB_WORKSPACE: ${{ github.workspace }}
         run: |
-          pacman -Sy --noconfirm git
           pwd
           ls -lisah
           git config --global --add safe.directory "$GITHUB_WORKSPACE"

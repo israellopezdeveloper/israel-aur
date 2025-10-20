@@ -11,18 +11,37 @@ jobs:
   import-gpg:
     runs-on: ubuntu-latest
     steps:
-      -
-        name: Checkout
+      - name: Checkout
         uses: actions/checkout@v4
-      -
-        name: Import GPG key
+      - name: Import GPG key
         uses: crazy-max/ghaction-import-gpg@v6
         with:
           gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
           passphrase: ${{ secrets.GPG_PASSPHRASE }}
-      -
-        name: List keys
+      - name: List keys
         run: gpg -K
+      - name: Sign any unsigned packages
+        env:
+          GPG_KEYID: ${{ secrets.GPG_KEYID }}
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+        run: |
+          any=0
+          for pkg in x86_64/*.pkg.tar.*; do
+            [ -e "$pkg" ] || continue   # si el glob no matchea, sigue
+            any=1
+            if [ -f "${pkg}.sig" ]; then
+              echo "Ya firmado: $pkg"
+              continue
+            fi
+            echo "Firmando: $pkg"
+            gpg --batch --yes --pinentry-mode loopback \
+              --passphrase "${{ secrets.GPG_PASSPHRASE }}" \
+              --detach-sign "$PKG"
+            ls -l x86_64
+          done
+          if [ "$any" -eq 0 ]; then
+            echo "No hay paquetes en x86_64/. Nada que firmar."
+          fi
 
 # jobs:
 #   build:

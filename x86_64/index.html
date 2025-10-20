@@ -6,9 +6,3 @@
   done
   )
 </ul>
-<script>
-  fetch('.').then(r=>r.text()).then(t=>{
-    const a=[...t.matchAll(/href="([^"]+)"/g)].map(m=>m[1]);
-    document.querySelector('ul').innerHTML=a.map(h=>`<li><a href="${h}">${h}</a></li>`).join('');
-  });
-</script>

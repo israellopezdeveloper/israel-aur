@@ -1,11 +1,11 @@
 name: Build & Sign Arch Repo
 
-on:
-  push:
-    branches: [ "main" ]
-    paths:
-      - "x86_64/**"
-      - ".github/workflows/repo.yml"
+# on:
+#   push:
+#     branches: [ "main" ]
+#     paths:
+#       - "x86_64/**"
+#       - ".github/workflows/repo.yml"
 
 jobs:
   regenerating-repo:

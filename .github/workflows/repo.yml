@@ -74,6 +74,8 @@ jobs:
             });
           </script>
           HTML
+          pwd
+          ls -lisah
 
 
 

@@ -1,8 +1,5 @@
 <!doctype html><meta charset="utf-8"><title>Arch Repo</title>
 <h1>Arch Repo</h1>
 <ul>
-  $(for i in $(ls x86_64); do
-    echo `<li><a href="https://github.com/israellopezdeveloper/israel-aur/blob/main/x86_64/$i">${i}</a></li>`
-  done
-  )
+  ${FILES}
 </ul>

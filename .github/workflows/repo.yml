@@ -36,7 +36,7 @@ jobs:
             echo "Firmando: $pkg"
             gpg --batch --yes --pinentry-mode loopback \
               --passphrase "${{ secrets.GPG_PASSPHRASE }}" \
-              --detach-sign "$PKG"
+              --detach-sign "$pkg"
             ls -l x86_64
           done
           if [ "$any" -eq 0 ]; then

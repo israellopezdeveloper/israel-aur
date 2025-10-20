@@ -41,6 +41,49 @@ jobs:
           done
           ls -l x86_64
 
+      - name: Rebuild signed repo database
+        working-directory: x86_64
+        env:
+          REPO_NAME: israrepo
+          GPG_KEYID: ${{ secrets.GPG_KEYID }}
+        run: |
+          count=$(ls -1 x86_64/*.pkg.tar.* 2>/dev/null | wc -l || true)
+          if [ "$count" -eq 0 ]; then
+            echo "No hay paquetes; se omite reconstrucción de la DB."
+            exit 0
+          fi
+
+          # limpiamos DB previa y reconstruimos firmada
+          rm -f "x86_64/${REPO_NAME}.db"* "x86_64/${REPO_NAME}.files"* || true
+          repo-add -s -k "$GPG_KEYID" -R "x86_64/${REPO_NAME}.db.tar.gz" x86_64/*.pkg.tar.*
+
+          # copias planas (evitar symlinks en Pages)
+          cp "x86_64/${REPO_NAME}.db.tar.gz"    "x86_64/${REPO_NAME}.db"
+          cp "x86_64/${REPO_NAME}.files.tar.gz" "x86_64/${REPO_NAME}.files"
+
+          # índice html opcional
+          cat > x86_64/index.html <<'HTML'
+          <!doctype html><meta charset="utf-8"><title>Arch Repo</title>
+          <h1>Arch Repo</h1><ul>
+          <!-- listado simple -->
+          </ul>
+          <script>
+            fetch('.').then(r=>r.text()).then(t=>{
+              const a=[...t.matchAll(/href="([^"]+)"/g)].map(m=>m[1]);
+              document.querySelector('ul').innerHTML=a.map(h=>`<li><a href="${h}">${h}</a></li>`).join('');
+            });
+          </script>
+          HTML
+
+
+
+
+
+
+
+
+
+
 # jobs:
 #   build:
 #     runs-on: ubuntu-latest

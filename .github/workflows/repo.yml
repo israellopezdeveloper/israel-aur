@@ -38,6 +38,9 @@ jobs:
           for pkg in x86_64/*.pkg.tar.*; do
             [ -e "$pkg" ] || continue   # si el glob no matchea, sigue
             any=1
+            if [[ "${pkg}" == sig* ]]; then
+              continue
+            fi
             if [ -f "${pkg}.sig" ]; then
               echo "Ya firmado: $pkg"
               continue
@@ -78,7 +81,7 @@ jobs:
             if [ "$i" = "index.html" ]; then
               continue
             fi
-            FILES="${FILES}<li><a href="https://github.com/israellopezdeveloper/israel-aur/blob/main/x86_64/$i">${i}</a></li>"
+            FILES="${FILES}<li><a href="https://israellopezdeveloper.github.io/israel-aur/x86_64/$i">${i}</a></li>"
           done
           cat > x86_64/index.html <<'HTML'
           <!DOCTYPE html>

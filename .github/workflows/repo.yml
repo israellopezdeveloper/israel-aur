@@ -73,14 +73,18 @@ jobs:
           cp "x86_64/${REPO_NAME}.files.tar.gz" "x86_64/${REPO_NAME}.files"
 
           # 5) index HTML opcional
+          FILES=""
+          for i in $(ls x86_64); do
+            if [ "$i" = "index.html" ]; then
+              continue
+            fi
+            FILES="${FILES}<li><a href="https://github.com/israellopezdeveloper/israel-aur/blob/main/x86_64/$i">${i}</a></li>"
+          done
           cat > x86_64/index.html <<'HTML'
           <!doctype html><meta charset="utf-8"><title>Arch Repo</title>
           <h1>Arch Repo</h1>
           <ul>
-            $(for i in $(ls x86_64); do
-              echo `<li><a href="https://github.com/israellopezdeveloper/israel-aur/blob/main/x86_64/$i">${i}</a></li>`
-            done
-            )
+            ${FILES}
           </ul>
           HTML
 

@@ -46,7 +46,7 @@ jobs:
           REPO_NAME: israrepo
           GPG_KEYID: ${{ secrets.GPG_KEYID }}
         run: |
-          count=$(ls -1 x86_64/*.pkg.tar.zst x86_64/*.pkg.tar.xz 2>/dev/null | wc -l || true)
+          count=$(ls -1 x86_64/*.pkg.tar.zst 2>/dev/null | wc -l || true)
           if [ "$count" -eq 0 ]; then
             echo "No hay paquetes; se omite reconstrucción de la DB."
             exit 0
@@ -58,7 +58,7 @@ jobs:
           # 3) reconstruir DB firmada con SOLO paquetes (excluye .sig)
           repo-add -s -k "$GPG_KEYID" -R \
             "x86_64/${REPO_NAME}.db.tar.gz" \
-            x86_64/*.pkg.tar.zst x86_64/*.pkg.tar.xz
+            x86_64/*.pkg.tar.zst
 
           # 4) copias planas (evitar symlinks en Pages)
           cp "x86_64/${REPO_NAME}.db.tar.gz"    "x86_64/${REPO_NAME}.db"

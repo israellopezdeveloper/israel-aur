@@ -10,6 +10,8 @@ on:
 jobs:
   regenerating-repo:
     runs-on: ubuntu-latest
+    container:
+      image: archlinux:latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -38,65 +40,6 @@ jobs:
               --detach-sign "$pkg"
           done
           ls -l x86_64
-
-
-      - name: Rebuild signed repo database
-        env:
-          REPO_NAME: israrepo
-          GPG_KEYID: ${{ secrets.GPG_KEYID }}
-        run: |
-          # ¿hay algún paquete?
-          count=$(ls -1 x86_64/*.pkg.tar.* 2>/dev/null | wc -l || true)
-          if [ "$count" -eq 0 ]; then
-            echo "No hay paquetes; se omite reconstrucción de la DB."
-            exit 0
-          fi
-
-          # limpiamos DB previa y reconstruimos firmada
-          rm -f "x86_64/${REPO_NAME}.db"* "x86_64/${REPO_NAME}.files"* || true
-          repo-add -s -k "$GPG_KEYID" -R "x86_64/${REPO_NAME}.db.tar.gz" x86_64/*.pkg.tar.*
-
-          # copias planas (evitar symlinks en Pages)
-          cp "x86_64/${REPO_NAME}.db.tar.gz"    "x86_64/${REPO_NAME}.db"
-          cp "x86_64/${REPO_NAME}.files.tar.gz" "x86_64/${REPO_NAME}.files"
-
-          # índice html opcional
-          cat > x86_64/index.html <<'HTML'
-          <!doctype html><meta charset="utf-8"><title>Arch Repo</title>
-          <h1>Arch Repo</h1><ul>
-          <!-- listado simple -->
-          </ul>
-          <script>
-            fetch('.').then(r=>r.text()).then(t=>{
-              const a=[...t.matchAll(/href="([^"]+)"/g)].map(m=>m[1]);
-              document.querySelector('ul').innerHTML=a.map(h=>`<li><a href="${h}">${h}</a></li>`).join('');
-            });
-          </script>
-          HTML
-
-      - name: Commit & push if changed
-        working-directory: ${{ github.workspace }}
-        env:
-          GITHUB_WORKSPACE: ${{ github.workspace }}
-        run: |
-          set -euo pipefail
-          ls -lisah
-          git config --global --add safe.directory "$GITHUB_WORKSPACE"
-          git config --global user.name  "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-
-          echo "Ubicación actual: $(pwd)"
-          echo "Archivos modificados:"
-          git status --short || true
-
-          if ! git diff --quiet || ! git diff --cached --quiet; then
-            git add -A
-            git commit -m "Update signed repo database"
-            git push
-          else
-            echo "No changes to commit."
-          fi
-
 
 # jobs:
 #   build:

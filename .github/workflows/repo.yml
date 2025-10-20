@@ -36,18 +36,11 @@ jobs:
           echo "pinentry-mode loopback" >> ~/.gnupg/gpg.conf
           echo "allow-loopback-pinentry" >> ~/.gnupg/gpg-agent.conf
 
-          # Asegura que existe pinentry y el agente puede arrancar
-          pacman -Sy --noconfirm pinentry
           gpgconf --kill gpg-agent || true
           gpgconf --launch gpg-agent
 
-          # Importar desde archivo (evita ioctl issues con stdin)
-          KEYFILE="$(mktemp)"
-          printf '%s' "$GPG_PRIVATE_KEY" > "$KEYFILE"
-          chmod 600 "$KEYFILE"
-
-          gpg --batch --yes --no-tty --pinentry-mode loopback --import "$KEYFILE"
-          rm -f "$KEYFILE"
+          # Importar
+          echo "$GPG_PRIVATE_KEY" | base64 --decode | gpg --batch --import
 
           # Verificación
           gpg --batch --no-tty --list-secret-keys
@@ -73,9 +66,7 @@ jobs:
               continue
             fi
             echo "Firmando: $pkg"
-            gpg --batch --yes --no-tty \
-              --local-user "$GPG_KEYID" \
-              --detach-sign --armor "$pkg"
+            gpg --batch --pinentry-mode=loopback --passphrase "$GPG_PASSPHRASE" "$pkg"
           done
           if [ "$any" -eq 0 ]; then
             echo "No hay paquetes en x86_64/. Nada que firmar."

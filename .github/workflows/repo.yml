@@ -97,14 +97,9 @@ jobs:
           echo "Ubicación actual: $(pwd)"
           echo "Archivos modificados:"
           git status --short || true
-
-          if ! git diff --quiet || ! git diff --cached --quiet; then
-            git add -A
-            git commit -m "Update signed repo database"
-            git push
-          else
-            echo "No changes to commit."
-          fi
+          git add .
+          git commit -m "Update signed repo database"
+          git push
 
 
 

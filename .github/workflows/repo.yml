@@ -61,6 +61,7 @@ jobs:
             x86_64/*.pkg.tar.zst
 
           # 4) copias planas (evitar symlinks en Pages)
+          rm -rf x86_64/${REPO_NAME}.db x86_64/${REPO_NAME}.files || true
           cp "x86_64/${REPO_NAME}.db.tar.gz"    "x86_64/${REPO_NAME}.db"
           cp "x86_64/${REPO_NAME}.files.tar.gz" "x86_64/${REPO_NAME}.files"
 

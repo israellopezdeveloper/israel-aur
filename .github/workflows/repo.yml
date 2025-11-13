@@ -36,13 +36,8 @@ jobs:
         run: |
           any=0
           for pkg in x86_64/*.pkg.tar.*; do
-            [ -e "$pkg" ] || continue   # si el glob no matchea, sigue
-            any=1
+            [ -e "$pkg" ] || continue
             if [[ "${pkg}" == *sig ]]; then
-              continue
-            fi
-            if [ -f "${pkg}.sig" ]; then
-              echo "Ya firmado: $pkg"
               continue
             fi
             gpg --batch --yes --pinentry-mode loopback \

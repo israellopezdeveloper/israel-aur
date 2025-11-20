@@ -37,13 +37,9 @@ jobs:
           GPG_KEYID: ${{ secrets.GPG_KEYID }}
           GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
         run: |
-          echo "PASA 1"
           any=0
-          echo "PASA 2"
           CURR_DIR="$(pwd)"
-          echo "PASA 3"
           cd /tmp
-          echo "PASA 4"
           AUR_PACKAGES=(
             "python-tree-sitter"
             "python-tree-sitter-make"
@@ -67,7 +63,6 @@ jobs:
             "wlogout"
             "zsh-theme-powerlevel10k-git"
           )
-          echo "PASA 5"
           for pkg in "${AUR_PACKAGES[@]}"; do
             echo "========================== ${pkg} =========================="
             sudo -u builder bash -c " \
@@ -79,7 +74,7 @@ jobs:
             rm *-debug* > /dev/null 2>&1
             pacman -S --noconfirm ./*.tar.zst > /dev/null 2>&1 \
                   || echo '========= ERROR on installing package ===========' \
-                  && echo 'PACKAGE installed!!!!!'"
+                  && echo 'PACKAGE installed!!!!!'
             mv *.tar.zst "${CURR_DIR}/x86_64"
             cd ..
             rm -rf "${pkg}" > /dev/null 2>&1

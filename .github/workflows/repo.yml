@@ -70,7 +70,7 @@ jobs:
                 cd \"${pkg}\";
                 makepkg -sf --noconfirm"
             rm *-debug* > /dev/null 2>&1
-            pacman -S --noconfirm ./*.tar.zst > /dev/null 2>&1
+            pacman -S --noconfirm ./*.tar.zst
             mv *.tar.zst "${CURR_DIR}/x86_64"
             cd ..
             rm -rf "${pkg}" > /dev/null 2>&1

@@ -13,7 +13,7 @@ jobs:
       image: archlinux:latest
     steps:
       - name: Install git
-        run: pacman -Syu --noconfirm git openssh sudo debugedit base-devel fakeroot binutils
+        run: pacman -Sy --noconfirm git openssh sudo debugedit base-devel
       - name: Checkout
         uses: actions/checkout@v4
         with:
@@ -65,7 +65,10 @@ jobs:
           )
           for pkg in "${AUR_PACKAGES[@]}"; do
             echo "========================== ${pkg} =========================="
-            sudo -u builder bash -c "git clone \"https://aur.archlinux.org/${pkg}.git\" > /dev/null; cd \"${pkg}\"; makepkg -sf --noconfirm > /dev/null"
+            sudo -u builder bash -c "
+                git clone \"https://aur.archlinux.org/${pkg}.git\" > /dev/null;
+                cd \"${pkg}\";
+                makepkg -sf --noconfirm"
             rm *-debug* > /dev/null 2>&1
             pacman -S --noconfirm ./*.tar.zst > /dev/null 2>&1
             mv *.tar.zst "${CURR_DIR}/x86_64"

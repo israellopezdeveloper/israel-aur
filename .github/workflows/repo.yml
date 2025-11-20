@@ -13,7 +13,7 @@ jobs:
       image: archlinux:latest
     steps:
       - name: Install git
-        run: pacman -Sy --noconfirm git openssh
+        run: pacman -Sy --noconfirm git openssh sudo
       - name: Checkout
         uses: actions/checkout@v4
         with:

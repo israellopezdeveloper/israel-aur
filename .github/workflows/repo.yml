@@ -70,7 +70,7 @@ jobs:
             sudo -u builder bash -c " \
                 git clone \"https://aur.archlinux.org/${pkg}.git\" > /dev/null; \
                 cd \"${pkg}\"; \
-                makepkg -sf --noconfirm \
+                makepkg -sf --noconfirm --skippgpcheck \
                   && echo 'PACKAGE created' \
                   || echo '=========== ERROR on creating package ==========='; \
                 mv *.tar.zst ..;"

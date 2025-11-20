@@ -43,39 +43,36 @@ jobs:
           cd /tmp
           AUR_PACKAGES=(
             "autotools-language-server"
-            "brave-bin"
             "brave-extension-bitwarden-git"
             "clockify-cli"
             "codelldb-bin"
             "dockerfile-language-server"
             "gimp-plugin-resynthesizer"
             "gnu-netcat"
-            "google-chrome"
             "pwvucontrol"
             "python-jupytext"
             "python-kaleido-bin"
             "python-pnglatex"
-            "quarto-cli-bin"
             "ruby-neovim"
             "shellcheck-bin"
-            "slack-desktop"
             "solidity"
             "solidity-language-server"
             "upwork-beta"
             "vscode-langservers-extracted"
             "wlogout"
-            "xmind"
-            "zoom"
             "zsh-theme-powerlevel10k-git"
           )
           for pkg in "${AUR_PACKAGES[@]}"; do
-            git clone "https://aur.archlinux.org/${pkg}.git"
+            echo "========================== ${pkg} =========================="
+            git clone "https://aur.archlinux.org/${pkg}.git" > /dev/null
             cd "${pkg}"
-            makepkg -sf --noconfirm
+            makepkg -sf --noconfirm > /dev/null
             rm *-debug* > /dev/null 2>&1
             mv *.tar.zst "${CURR_DIR}/x86_64"
             cd ..
             rm -rf "${pkg}" > /dev/null 2>&1
+            echo "========================== ${pkg} =========================="
+            echo -e "\n\n"
           done
           cd "${CURR_DIR}"
           EOF

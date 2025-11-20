@@ -58,6 +58,7 @@ jobs:
             "python-pnglatex"
             "ruby-neovim"
             "shellcheck-bin"
+            "evmone"
             "solidity"
             "solidity-language-server"
             "upwork-beta"

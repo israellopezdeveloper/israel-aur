@@ -69,14 +69,14 @@ jobs:
                 git clone \"https://aur.archlinux.org/${pkg}.git\" > /dev/null; \
                 cd \"${pkg}\"; \
                 makepkg -sf --noconfirm > /dev/null 2>&1 \
-                  || echo '=========== ERROR on creating package ===========' \
-                  && echo 'PACKAGE created'; \
+                  && echo 'PACKAGE created' \
+                  || echo '=========== ERROR on creating package ==========='; \
                 mv *.tar.zst ..;"
             ls -lisah
             rm *-debug* > /dev/null 2>&1 || true
-            pacman -S --noconfirm ./*.tar.zst > /dev/null 2>&1 \
-                  || echo '========= ERROR on installing package ===========' \
-                  && echo 'PACKAGE installed!!!!!'
+            pacman -S --noconfirm ./*.tar.zst \
+                  && echo 'PACKAGE installed!!!!!' \
+                  || echo '========= ERROR on installing package ==========='
             mv *.tar.zst "${CURR_DIR}/x86_64"
             cd ..
             rm -rf "${pkg}" > /dev/null 2>&1

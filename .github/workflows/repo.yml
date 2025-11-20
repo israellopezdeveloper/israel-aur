@@ -3,9 +3,6 @@ name: Build & Sign Arch Repo
 on:
   push:
     branches: [ "main" ]
-#     paths:
-#       - "x86_64/**"
-#       - ".github/workflows/repo.yml"
 
 jobs:
   regenerating-repo:
@@ -35,12 +32,20 @@ jobs:
           GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
         run: |
           any=0
+          pacman -S --needed base-devel git
+          git clone https://aur.archlinux.org/yay.git
+          cd yay
+          makepkg -sf
+          mv yay*.tar.zst ../x86_64
+          cd ..
+          rm -rf yay
           for pkg in x86_64/*.pkg.tar.*; do
             [ -e "$pkg" ] || continue
             if [[ "${pkg}" == *sig ]]; then
               continue
             fi
             gpg --batch --yes --pinentry-mode loopback \
+              --local-user "$GPG_KEYID" \
               --passphrase "${{ secrets.GPG_PASSPHRASE }}" \
               --detach-sign "$pkg"
           done

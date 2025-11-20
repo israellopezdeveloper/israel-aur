@@ -58,7 +58,6 @@ jobs:
             "python-pnglatex"
             "ruby-neovim"
             "shellcheck-bin"
-            "evmone"
             "solidity"
             "solidity-language-server"
             "upwork-beta"
@@ -83,7 +82,7 @@ jobs:
             mv *.tar.zst "${CURR_DIR}/x86_64"
             rm -rf "${pkg}" > /dev/null 2>&1
             echo "========================== ${pkg} =========================="
-            echo -e ".\n.\n.\n.\n.\n.\n"
+            echo -e "\n\n"
           done
           cd "${CURR_DIR}"
           for pkg in x86_64/*.pkg.tar.*; do

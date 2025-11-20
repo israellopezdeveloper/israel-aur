@@ -74,11 +74,10 @@ jobs:
                 mv *.tar.zst ..;"
             ls -lisah
             rm *-debug* > /dev/null 2>&1 || true
-            pacman -U --noconfirm ./*.tar.zst \
+            pacman -U --noconfirm ./*.tar.zst > /dev/null 2>&1 \
                   && echo 'PACKAGE installed!!!!!' \
                   || echo '========= ERROR on installing package ==========='
             mv *.tar.zst "${CURR_DIR}/x86_64"
-            cd ..
             rm -rf "${pkg}" > /dev/null 2>&1
             echo "========================== ${pkg} =========================="
             echo -e "\n\n"

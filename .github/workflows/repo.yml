@@ -42,6 +42,7 @@ jobs:
           cd /tmp
           AUR_PACKAGES=(
             "python-tree-sitter"
+            "python-lsp-tree-sitter"
             "python-tree-sitter-make"
             "autotools-language-server"
             "brave-extension-bitwarden-git"

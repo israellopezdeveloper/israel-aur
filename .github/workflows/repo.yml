@@ -64,11 +64,7 @@ jobs:
           )
           for pkg in "${AUR_PACKAGES[@]}"; do
             echo "========================== ${pkg} =========================="
-            sudo -u builder bash << 'EOF'
-            git clone "https://aur.archlinux.org/${pkg}.git" > /dev/null
-            cd "${pkg}"
-            makepkg -sf --noconfirm > /dev/null
-            EOF
+            sudo -u builder bash -c "git clone \"https://aur.archlinux.org/${pkg}.git\" > /dev/null; cd \"${pkg}\"; makepkg -sf --noconfirm > /dev/null"
             rm *-debug* > /dev/null 2>&1
             pacman -S --noconfirm ./*.tar.zst > /dev/null 2>&1
             mv *.tar.zst "${CURR_DIR}/x86_64"

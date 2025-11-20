@@ -72,10 +72,10 @@ jobs:
             git clone "https://aur.archlinux.org/${pkg}.git"
             cd "${pkg}"
             makepkg -sf --noconfirm
-            rm *-debug*
+            rm *-debug* > /dev/null 2>&1
             mv *.tar.zst "${CURR_DIR}/x86_64"
             cd ..
-            rm -rf "${pkg}"
+            rm -rf "${pkg}" > /dev/null 2>&1
           done
           cd "${CURR_DIR}"
           EOF

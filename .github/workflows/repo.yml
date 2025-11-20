@@ -45,7 +45,7 @@ jobs:
             "python-lsp-tree-sitter"
             "python-tree-sitter-make"
             "autotools-language-server"
-            "brave-extension-bitwarden-git"
+            # "brave-extension-bitwarden-git"
             "clockify-cli"
             "codelldb-bin"
             "dockerfile-language-server"

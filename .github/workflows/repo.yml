@@ -65,9 +65,9 @@ jobs:
           )
           for pkg in "${AUR_PACKAGES[@]}"; do
             echo "========================== ${pkg} =========================="
-            sudo -u builder bash -c "
-                git clone \"https://aur.archlinux.org/${pkg}.git\" > /dev/null;
-                cd \"${pkg}\";
+            sudo -u builder bash -c " \
+                git clone \"https://aur.archlinux.org/${pkg}.git\" > /dev/null; \
+                cd \"${pkg}\"; \
                 makepkg -sf --noconfirm > /dev/null 2>&1 \
                   || echo '=========== ERROR on creating package ===========' \
                   && echo 'PACKAGE created!!!!!'"

@@ -13,7 +13,7 @@ jobs:
       image: archlinux:latest
     steps:
       - name: Install git
-        run: pacman -Sy --noconfirm git openssh sudo
+        run: pacman -Sy --noconfirm git openssh sudo debugedit
       - name: Checkout
         uses: actions/checkout@v4
         with:
@@ -61,7 +61,6 @@ jobs:
             "slack-desktop"
             "solidity"
             "solidity-language-server"
-            "steam"
             "upwork-beta"
             "vscode-langservers-extracted"
             "wlogout"

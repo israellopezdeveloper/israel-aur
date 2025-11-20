@@ -51,6 +51,7 @@ jobs:
             "dockerfile-language-server"
             "gimp-plugin-resynthesizer"
             "gnu-netcat"
+            "ibwireplumber-4.0-compat"
             "pwvucontrol"
             "python-jupytext"
             "python-kaleido-bin"

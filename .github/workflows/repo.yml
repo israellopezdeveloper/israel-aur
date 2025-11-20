@@ -26,19 +26,30 @@ jobs:
           passphrase: ${{ secrets.GPG_PASSPHRASE }}
       - name: List keys
         run: gpg -K
+      - name: Create non-root user
+        run: |
+          useradd -m builder
+          passwd -d builder
+          echo "builder ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+          chown -R builder:builder .
       - name: Sign any unsigned packages
         env:
           GPG_KEYID: ${{ secrets.GPG_KEYID }}
           GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
         run: |
           any=0
-          pacman -S --needed --noconfirm base-devel git
+          sudo -u builder bash << EOF
+          CURR_DIR="$(pwd)"
+          cd /tmp
           git clone https://aur.archlinux.org/yay.git
           cd yay
           makepkg -sf --noconfirm
-          mv yay*.tar.zst ../x86_64
+          rm yay-debug*
+          mv yay*.tar.zst "${CURR_DIR}/x86_64"
           cd ..
           rm -rf yay
+          cd "${CURR_DIR}"
+          EOF
           for pkg in x86_64/*.pkg.tar.*; do
             [ -e "$pkg" ] || continue
             if [[ "${pkg}" == *sig ]]; then

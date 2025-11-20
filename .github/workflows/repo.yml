@@ -39,16 +39,16 @@ jobs:
         run: |
           any=0
           sudo -u builder bash << EOF
-          CURR_DIR="$(pwd)"
+          CURR_DIR="$$(pwd)"
           cd /tmp
           git clone https://aur.archlinux.org/yay.git
           cd yay
           makepkg -sf --noconfirm
           rm yay-debug*
-          mv yay*.tar.zst "${CURR_DIR}/x86_64"
+          mv yay*.tar.zst "$${CURR_DIR}/x86_64"
           cd ..
           rm -rf yay
-          cd "${CURR_DIR}"
+          cd "$${CURR_DIR}"
           EOF
           for pkg in x86_64/*.pkg.tar.*; do
             [ -e "$pkg" ] || continue

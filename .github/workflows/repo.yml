@@ -32,10 +32,10 @@ jobs:
           GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
         run: |
           any=0
-          pacman -S --needed base-devel git
+          pacman -S --needed --noconfirm base-devel git
           git clone https://aur.archlinux.org/yay.git
           cd yay
-          makepkg -sf
+          makepkg -sf --noconfirm
           mv yay*.tar.zst ../x86_64
           cd ..
           rm -rf yay

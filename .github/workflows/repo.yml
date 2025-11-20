@@ -70,7 +70,7 @@ jobs:
                 cd \"${pkg}\"; \
                 makepkg -sf --noconfirm > /dev/null 2>&1 \
                   || echo '=========== ERROR on creating package ===========' \
-                  && echo 'PACKAGE created!!!!!'"
+                  && echo 'PACKAGE created';"
             rm *-debug* > /dev/null 2>&1
             pacman -S --noconfirm ./*.tar.zst > /dev/null 2>&1 \
                   || echo '========= ERROR on installing package ===========' \

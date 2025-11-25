@@ -9,7 +9,6 @@ dockerfile-language-server
 gimp-plugin-resynthesizer
 gnu-netcat
 google-chrome
-key-sender
 libwireplumber-4.0-compat
 mpv-web-remote
 nodejs-neovim

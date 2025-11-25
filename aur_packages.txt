@@ -1,13 +1,8 @@
-isra-backgrounds
-isra-scripts
-isra-sddm-theme
 autotools-language-server
 brave-bin
 clockify-cli
 codelldb-bin
 dockerfile-language-server
-dwl-israel
-dwm-israel
 gimp-plugin-resynthesizer
 gnu-netcat
 google-chrome

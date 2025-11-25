@@ -17,7 +17,6 @@ python-kaleido-bin
 python-pnglatex
 ruby-neovim
 shellcheck-bin
-slides
 solidity-bin
 solidity-language-server
 st

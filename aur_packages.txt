@@ -10,7 +10,6 @@ gimp-plugin-resynthesizer
 gnu-netcat
 google-chrome
 libwireplumber-4.0-compat
-mpv-web-remote
 nodejs-neovim
 pwvucontrol
 python-jupytext

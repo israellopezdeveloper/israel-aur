@@ -13,7 +13,7 @@ jobs:
       image: archlinux:latest
     steps:
       - name: Install git
-        run: pacman -Syu --noconfirm git openssh sudo debugedit base-devel
+        run: pacman -Syu --noconfirm git openssh sudo debugedit base-devel curl
       - name: Checkout
         uses: actions/checkout@v4
         with:
@@ -24,8 +24,6 @@ jobs:
         with:
           gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
           passphrase: ${{ secrets.GPG_PASSPHRASE }}
-      - name: List keys
-        run: gpg -K
       - name: Create non-root user
         run: |
           useradd -m builder
@@ -39,32 +37,8 @@ jobs:
         run: |
           any=0
           CURR_DIR="$(pwd)"
+          AUR_PACKAGES=$(cat .github/aur_packages.txt)
           cd /tmp
-          AUR_PACKAGES=(
-            "python-tree-sitter"
-            "python-lsp-tree-sitter"
-            "python-tree-sitter-make"
-            "autotools-language-server"
-            # "brave-extension-bitwarden-git"
-            "clockify-cli"
-            "codelldb-bin"
-            "dockerfile-language-server"
-            "gimp-plugin-resynthesizer"
-            "gnu-netcat"
-            "libwireplumber-4.0-compat"
-            "pwvucontrol"
-            "python-jupytext"
-            "python-kaleido-bin"
-            "python-pnglatex"
-            "ruby-neovim"
-            "shellcheck-bin"
-            "solidity-bin"
-            "solidity-language-server"
-            "upwork-beta"
-            "vscode-langservers-extracted"
-            "wlogout"
-            "zsh-theme-powerlevel10k-git"
-          )
           for pkg in "${AUR_PACKAGES[@]}"; do
             echo "========================== ${pkg} =========================="
             sudo -u builder bash -c " \
@@ -92,7 +66,7 @@ jobs:
             fi
             gpg --batch --yes --pinentry-mode loopback \
               --local-user "$GPG_KEYID" \
-              --passphrase "${{ secrets.GPG_PASSPHRASE }}" \
+              --passphrase "$GPG_PASSPHRASE" \
               --detach-sign "$pkg"
           done
           ls -l x86_64
@@ -109,7 +83,7 @@ jobs:
           fi
 
           # 2) limpiar DB previa
-          rm -f "x86_64/${REPO_NAME}.db"* "x86_64/${REPO_NAME}.files"* || true
+          # rm -f "x86_64/${REPO_NAME}.db"* "x86_64/${REPO_NAME}.files"* || true
 
           # 3) reconstruir DB firmada con SOLO paquetes (excluye .sig)
           repo-add -s -k "$GPG_KEYID" -R \
@@ -127,7 +101,7 @@ jobs:
             if [ "$i" = "index.html" ]; then
               continue
             fi
-            FILES="${FILES}<li><a href="https://israellopezdeveloper.github.io/israel-aur/x86_64/$i">${i}</a></li>"
+            FILES="${FILES}<li><a href=\"https://kogaslife.duckdns.org/israrepo/x86_64/$i\">${i}</a></li>"
           done
           cat > x86_64/index.html <<'HTML'
           <!DOCTYPE html>
@@ -148,33 +122,16 @@ jobs:
           HTML
 
           ls -lisah x86_64
-
-      - name: Set SSH
+      - name: Upload repo files to remote server
         env:
-          REPO_NAME: israrepo
-          DEPLOY_KEY_PRIV: ${{ secrets.DEPLOY_KEY_PRIV }}
-          DEPLOY_KEY_PUB: ${{ secrets.DEPLOY_KEY_PUB }}
+          UPLOAD_URL: https://kogaslife.duckdns.org/israrepo/upload.php
         run: |
-          mkdir -p ~/.ssh && chmod 700 ~/.ssh
-          echo "${DEPLOY_KEY_PRIV}" > ~/.ssh/id_ed25519
-          echo "${DEPLOY_KEY_PUB}" > ~/.ssh/id_ed25519.pub
-          chmod 600 ~/.ssh/id_ed25519 || true
-          chmod 644 ~/.ssh/id_ed25519.pub || true
-          ssh-keyscan -t rsa,ecdsa,ed25519 github.com >> ~/.ssh/known_hosts
-
-      - name: Commit & push if changed
-        env:
-          GITHUB_WORKSPACE: ${{ github.workspace }}
-        run: |
-          pwd
-          ls -lisah x86_64
-          git config --global --add safe.directory "$GITHUB_WORKSPACE"
-          git config --global user.name  "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-
-          echo "Ubicación actual: $(pwd)"
-          echo "Archivos modificados:"
-          git status --short || true
-          git add .
-          git commit -m "Update signed repo database"
-          git push
+          set -e
+          echo "Subiendo ficheros de x86_64/ a ${UPLOAD_URL}"
+          for f in x86_64/*; do
+            [ -f "$f" ] || continue
+            echo "==> Uploading $f"
+            # Si tu upload.php necesita más parámetros, añádelos aquí
+            curl -sS -X POST -F "fileToUpload=@${f}" "$UPLOAD_URL"
+            echo
+          done

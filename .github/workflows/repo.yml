@@ -130,8 +130,25 @@ jobs:
           echo "Subiendo ficheros de x86_64/ a ${UPLOAD_URL}"
           for f in x86_64/*; do
             [ -f "$f" ] || continue
-            echo "==> Uploading $f"
-            # Si tu upload.php necesita más parámetros, añádelos aquí
-            curl -sS -X POST -F "fileToUpload=@${f}" "$UPLOAD_URL"
-            echo
+
+            max_retries=3
+            retry=1
+            success=0
+
+            while [ $retry -le $max_retries ]; do
+              echo "==> Uploading $f (attempt $retry/$max_retries)"
+              if curl -sS -X POST -F "fileToUpload=@${f}" "$UPLOAD_URL"; then
+                echo "✅ Upload succeeded for $f"
+                success=1
+                break
+              else
+                echo "❌ Upload failed for $f"
+              fi
+              retry=$((retry + 1))
+              sleep 2
+            done
+
+            if [ $success -ne 1 ]; then
+              echo "🚨 Upload failed after $max_retries attempts for $f"
+            fi
           done

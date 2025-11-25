@@ -39,7 +39,7 @@ jobs:
           CURR_DIR="$(pwd)"
           AUR_PACKAGES=$(cat aur_packages.txt)
           cd /tmp
-          for pkg in "${AUR_PACKAGES[@]}"; do
+          for pkg in ${AUR_PACKAGES[@]}; do
             echo "========================== ${pkg} =========================="
             sudo -u builder bash -c " \
                 git clone \"https://aur.archlinux.org/${pkg}.git\" > /dev/null; \

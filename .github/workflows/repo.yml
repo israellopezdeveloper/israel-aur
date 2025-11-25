@@ -94,6 +94,7 @@ jobs:
           rm -rf x86_64/${REPO_NAME}.db x86_64/${REPO_NAME}.files || true
           cp "x86_64/${REPO_NAME}.db.tar.gz"    "x86_64/${REPO_NAME}.db"
           cp "x86_64/${REPO_NAME}.files.tar.gz" "x86_64/${REPO_NAME}.files"
+          rm x86_64/*.tar.gz.old*
 
           # 5) index HTML opcional
           FILES=""

@@ -12,7 +12,7 @@ jobs:
     container:
       image: archlinux:latest
     steps:
-      - name: Install git
+      - name: Install packages
         run: pacman -Syu --noconfirm git openssh sudo debugedit base-devel curl
       - name: Checkout
         uses: actions/checkout@v4
@@ -37,7 +37,7 @@ jobs:
         run: |
           any=0
           CURR_DIR="$(pwd)"
-          AUR_PACKAGES=$(cat .github/aur_packages.txt)
+          AUR_PACKAGES=$(cat aur_packages.txt)
           cd /tmp
           for pkg in "${AUR_PACKAGES[@]}"; do
             echo "========================== ${pkg} =========================="

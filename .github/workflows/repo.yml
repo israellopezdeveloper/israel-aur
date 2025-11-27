@@ -44,18 +44,18 @@ jobs:
           for pkg in ${AUR_PACKAGES[@]}; do
             echo "========================== ${pkg} =========================="
             sudo -u builder bash -c " \
-                git clone \"https://aur.archlinux.org/${pkg}.git\" > /dev/null; \
-                cd \"${pkg}\"; \
-                makepkg -sf --noconfirm --skippgpcheck \
-                  && echo 'PACKAGE created' \
-                  || echo '=========== ERROR on creating package ==========='; \
-                mv *.tar.zst ..;"
-            rm *-debug* > /dev/null 2>&1 || true
-            pacman -U --noconfirm ./*.tar.zst \
-                  && echo 'PACKAGE installed!!!!!' \
-                  || echo '========= ERROR on installing package ==========='
+              git clone \"https://aur.archlinux.org/${pkg}.git\" >/dev/null 2>&1; \
+              cd \"${pkg}\"; \
+              makepkg -sf --noconfirm --skippgpcheck >/dev/null 2>&1 \
+                && echo '  ==> PACKAGE created' \
+                || echo '  ==> ERROR on creating package'; \
+              mv *.tar.zst ..;"
+            rm *-debug* >/dev/null 2>&1 || true
+            pacman -U --noconfirm ./*.tar.zst >/dev/null 2>&1 \
+              && echo '  ==> PACKAGE installed!!!!!' \
+              || echo '  ==> ERROR on installing package'
             mv *.tar.zst "${CURR_DIR}/x86_64"
-            rm -rf "${pkg}" > /dev/null 2>&1
+            rm -rf "${pkg}" >/dev/null 2>&1 || true
             echo "========================== ${pkg} =========================="
             echo -e ".\n.\n.\n.\n.\n.\n"
           done
@@ -68,7 +68,7 @@ jobs:
             gpg --batch --yes --pinentry-mode loopback \
               --local-user "$GPG_KEYID" \
               --passphrase "$GPG_PASSPHRASE" \
-              --detach-sign "$pkg"
+              --detach-sign "$pkg" >/dev/null 2>&1
           done
           ls -l x86_64
 

@@ -43,8 +43,13 @@ jobs:
           cd /tmp
           touch log.log
           chmod 666 log.log
+          WIDTH_MAX=100
           for pkg in ${AUR_PACKAGES[@]}; do
-            echo "========================== ${pkg} =========================="
+            VAR_LENGTH=${#pkg}
+            eval "printf \"=%.0s\" {1..$(((WIDTH_MAX - VAR_LENGTH)/2))}"
+            printf " %s " "${pkg}"
+            eval "printf \"=%.0s\" {1..$(((WIDTH_MAX - VAR_LENGTH)/2))}"
+            echo
             sudo -u builder bash -c " \
               git clone \"https://aur.archlinux.org/${pkg}.git\" \
               >/dev/null 2>log.log \
@@ -74,7 +79,10 @@ jobs:
               }
             mv *.tar.zst "${CURR_DIR}/x86_64"
             rm -rf "${pkg}" >/dev/null 2>&1 || true
-            echo "========================== ${pkg} =========================="
+            eval "printf \"=%.0s\" {1..$(((WIDTH_MAX - VAR_LENGTH)/2))}"
+            printf " %s " "${pkg}"
+            eval "printf \"=%.0s\" {1..$(((WIDTH_MAX - VAR_LENGTH)/2))}"
+            echo
             echo -e ".\n.\n.\n"
           done
           cd "${CURR_DIR}"
@@ -121,10 +129,11 @@ jobs:
               continue
             fi
             FILE_NAME="$(basename "${i}")"
+            FILE_SIZE="$(stat -c "%s" "${i}" | numfmt --to=iec)"
             if [ "$(stat -c "%s" "${i}")" -lt "${THRESHOLD}" ]; then
-              FILES="${FILES}<li><a href="https://israellopezdeveloper.github.io/israel-aur/$i">${FILE_NAME}</a></li>"
+              FILES="${FILES}<tr><td><a href="https://israellopezdeveloper.github.io/israel-aur/$i">${FILE_NAME}</a></td><td>${FILE_SIZE}</td></tr>"
             else
-              FILES="${FILES}<li><a href="https://kogaslife.duckdns.org/israrepo/$i">${FILE_NAME}</a></li>"
+              FILES="${FILES}<tr><td><a href="https://kogaslife.duckdns.org/israrepo/$i">${FILE_NAME}</a></td><td>${FILE_SIZE}</td></tr>"
             fi
           done
           cat > x86_64/index.html <<'HTML'
@@ -132,15 +141,28 @@ jobs:
           <html lang="en">
             <head>
               <meta charset="utf-8">
-              <title>Israel Arch Repo (/x86_64)</title>
+              <title>Israel's Repo (/x86_64)</title>
+              <link href="../style.css" rel="stylesheet" />
             </head>
             <body>
-              <h1>Israel Arch Repo (/x86_64)</h1>
-              <ul>
+              <h1>Israel's Repo (/x86_64)</h1>
+              <table>
+                <thead>
+                  <tr>
+                    <th>File</th>
+                    <th>Size</th>
+                  </tr>
+                  <tbody>
+                    <tr>
+                      <td><a href="https://israellopezdeveloper.github.io/israel-aur/x86_64">/x86_64</a></td>
+                      <td>Arch Linux personal packages and it's dependencies</td>
+                    </tr>
           HTML
           echo "${FILES}" >> x86_64/index.html
           cat >> x86_64/index.html <<'HTML'
-              </ul>
+                  </tbody>
+                </thead>
+              </table>
             </body>
           </html>
           HTML

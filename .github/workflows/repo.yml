@@ -50,7 +50,6 @@ jobs:
                   && echo 'PACKAGE created' \
                   || echo '=========== ERROR on creating package ==========='; \
                 mv *.tar.zst ..;"
-            ls -lisah
             rm *-debug* > /dev/null 2>&1 || true
             pacman -U --noconfirm ./*.tar.zst \
                   && echo 'PACKAGE installed!!!!!' \
@@ -73,19 +72,67 @@ jobs:
           done
           ls -l x86_64
 
+      - name: Rebuild signed repo database
+        env:
+          REPO_NAME: israrepo
+          GPG_KEYID: ${{ secrets.GPG_KEYID }}
+        run: |
+          count=$(ls -1 x86_64/*.pkg.tar.zst 2>/dev/null | wc -l || true)
+          if [ "$count" -eq 0 ]; then
+            echo "No hay paquetes; se omite reconstrucción de la DB."
+            exit 0
+          fi
+          repo-add -s -k "$GPG_KEYID" -R \
+            "x86_64/${REPO_NAME}.db.tar.gz" \
+            x86_64/*.pkg.tar.zst
+          rm -rf x86_64/${REPO_NAME}.db x86_64/${REPO_NAME}.files || true
+          cp "x86_64/${REPO_NAME}.db.tar.gz"    "x86_64/${REPO_NAME}.db"
+          cp "x86_64/${REPO_NAME}.files.tar.gz" "x86_64/${REPO_NAME}.files"
+          FILES=""
+          THRESHOLD=$((100*1024*1024))
+          for i in $(ls x86_64); do
+            if [ "$i" = "index.html" ]; then
+              continue
+            fi
+            if [ "$(stat -c "%s" "${i}")" -lt "${THRESHOLD}" ]; then
+              FILES="${FILES}<li><a href="https://israellopezdeveloper.github.io/israel-aur/x86_64/$i">${i}</a></li>"
+            else
+              FILES="${FILES}<li><a href="https://kogaslife.duckdns.org/israrepo/x86_64/$i">${i}</a></li>"
+            fi
+          done
+          cat > x86_64/index.html <<'HTML'
+          <!DOCTYPE html>
+          <html lang="en">
+            <head>
+              <meta charset="utf-8">
+              <title>Israel Arch Repo (/x86_64)</title>
+            </head>
+            <body>
+              <h1>Israel Arch Repo (/x86_64)</h1>
+              <ul>
+          HTML
+          echo "${FILES}" >> x86_64/index.html
+          cat >> x86_64/index.html <<'HTML'
+              </ul>
+            </body>
+          </html>
+          HTML
+
       - name: Upload repo files to remote server
         env:
           UPLOAD_URL: https://kogaslife.duckdns.org/israrepo/upload.php
         run: |
           set -e
           echo "Subiendo ficheros de x86_64/ a ${UPLOAD_URL}"
+          THRESHOLD=$((100*1024*1024))
           for f in x86_64/*; do
             [ -f "$f" ] || continue
-
-            max_retries=3
+            if [ "$(stat -c "%s" "${f}")" -lt "${THRESHOLD}" ]; then
+              continue
+            fi
+            max_retries=6
             retry=1
             success=0
-
             while [ $retry -le $max_retries ]; do
               echo "==> Uploading $f (attempt $retry/$max_retries)"
               if curl -sS -X POST -F "fileToUpload=@${f}" "$UPLOAD_URL"; then
@@ -98,8 +145,38 @@ jobs:
               retry=$((retry + 1))
               sleep 2
             done
-
             if [ $success -ne 1 ]; then
               echo "🚨 Upload failed after $max_retries attempts for $f"
             fi
+            rm -rf "${f}"
           done
+
+      - name: Set SSH
+        env:
+          REPO_NAME: israrepo
+          DEPLOY_KEY_PRIV: ${{ secrets.DEPLOY_KEY_PRIV }}
+          DEPLOY_KEY_PUB: ${{ secrets.DEPLOY_KEY_PUB }}
+        run: |
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          echo "${DEPLOY_KEY_PRIV}" > ~/.ssh/id_ed25519
+          echo "${DEPLOY_KEY_PUB}" > ~/.ssh/id_ed25519.pub
+          chmod 600 ~/.ssh/id_ed25519 || true
+          chmod 644 ~/.ssh/id_ed25519.pub || true
+          ssh-keyscan -t rsa,ecdsa,ed25519 github.com >> ~/.ssh/known_hosts
+
+      - name: Commit & push if changed
+        env:
+          GITHUB_WORKSPACE: ${{ github.workspace }}
+        run: |
+          pwd
+          ls -lisah x86_64
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git config --global user.name  "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+          echo "Ubicación actual: $(pwd)"
+          echo "Archivos modificados:"
+          git status --short || true
+          git add .
+          git commit -m "Update signed repo database"
+          git push

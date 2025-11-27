@@ -187,16 +187,33 @@ jobs:
       - name: Commit & push if changed
         env:
           GITHUB_WORKSPACE: ${{ github.workspace }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
         run: |
-          pwd
-          ls -lisah x86_64
-          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          echo "Workspace: ${GITHUB_WORKSPACE}"
+          ls -lisah "${GITHUB_WORKSPACE}/x86_64"
+          cd "${GITHUB_WORKSPACE}"
           git config --global user.name  "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-
-          echo "Ubicación actual: $(pwd)"
-          echo "Archivos modificados:"
-          git status --short || true
+          git fetch origin gh-pages
+          # Preparamos un worktree limpio para gh-pages
+          rm -rf /tmp/gh-pages
+          git worktree add /tmp/gh-pages gh-pages
+          cd /tmp/gh-pages
+          # Borramos todo lo existente en gh-pages excepto el .git
+          find . -mindepth 1 -maxdepth 1 ! -name '.git' -exec rm -rf {} +
+          # Copiamos el contenido generado
+          mkdir -p x86_64
+          cp -r "${GITHUB_WORKSPACE}/x86_64/"* x86_64/
+          echo "Contenido final a publicar:"
+          ls -lisah
           git add .
+          # Si no hay cambios, no hacemos commit ni push
+          if git diff --cached --quiet; then
+            echo "No hay cambios en gh-pages; nada que commitear."
+            exit 0
+          fi
           git commit -m "Update signed repo database"
-          git push
+          git push origin gh-pages
+          # Limpieza opcional del worktree
+          cd "${GITHUB_WORKSPACE}"
+          git worktree remove /tmp/gh-pages --force || true

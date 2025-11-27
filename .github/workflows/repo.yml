@@ -136,10 +136,8 @@ jobs:
             rm -rf "${f}"
 
             f="${f}.sig"
+            echo "=================>> ${f}"
             [ -f "$f" ] || continue
-            if [ "$(stat -c "%s" "${f}")" -lt "${THRESHOLD}" ]; then
-              continue
-            fi
             max_retries=6
             retry=1
             success=0
@@ -191,11 +189,7 @@ jobs:
             fi
             FILE_NAME="$(basename "${i}")"
             FILE_SIZE="$(stat -c "%s" "${i}" | numfmt --to=iec)"
-            if [ "$(stat -c "%s" "${i}")" -lt "${THRESHOLD}" ]; then
-              FILES="${FILES}<tr><td><a href="https://israellopezdeveloper.github.io/israel-aur/$i">${FILE_NAME}</a></td><td>${FILE_SIZE}</td></tr>"
-            else
-              FILES="${FILES}<tr><td><a href="https://kogaslife.duckdns.org/israrepo/$i">${FILE_NAME}</a></td><td>${FILE_SIZE}</td></tr>"
-            fi
+            FILES="${FILES}<tr><td><a href=\"https://israellopezdeveloper.github.io/israel-aur/$i\">${FILE_NAME}</a></td><td>${FILE_SIZE}</td></tr>"
           done
           cat > x86_64/index.html <<'HTML'
           <!DOCTYPE html>

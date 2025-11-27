@@ -167,7 +167,7 @@ jobs:
           </html>
           HTML
 
-      - name: Upload repo files to remote server
+      - name: Upload repo files
         env:
           UPLOAD_URL: https://kogaslife.duckdns.org/israrepo/upload.php
         run: |

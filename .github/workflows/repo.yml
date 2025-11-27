@@ -41,6 +41,8 @@ jobs:
           CURR_DIR="$(pwd)"
           AUR_PACKAGES=$(cat aur_packages.txt)
           cd /tmp
+          touch log.log
+          chmod 666 log.log
           for pkg in ${AUR_PACKAGES[@]}; do
             echo "========================== ${pkg} =========================="
             sudo -u builder bash -c " \
@@ -72,7 +74,7 @@ jobs:
                 false;
               }
             mv *.tar.zst "${CURR_DIR}/x86_64"
-            rm -rf "${pkg}" log.log >/dev/null 2>&1 || true
+            rm -rf "${pkg}" >/dev/null 2>&1 || true
             echo "========================== ${pkg} =========================="
             echo -e ".\n.\n.\n"
           done
@@ -87,6 +89,7 @@ jobs:
               --passphrase "${GPG_PASSPHRASE}" \
               --detach-sign "$pkg" >/dev/null 2>&1
           done
+          rm log.log || true
           ls -l x86_64
 
       - name: Rebuild signed repo database

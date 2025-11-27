@@ -65,8 +65,7 @@ jobs:
                 }; \
               mv *.tar.zst ..;"
             rm *-debug* >/dev/null 2>&1 || true
-            pacman -U --noconfirm ./*.tar.zst
-            >/dev/null 2>log.log \
+            pacman -U --noconfirm ./*.tar.zst >/dev/null 2>log.log \
               && echo '  ==> Installed OK!!!!!' \
               || {
                 echo '  ==> Installing KO';
@@ -114,10 +113,11 @@ jobs:
             if [ "$i" = "index.html" ]; then
               continue
             fi
+            FILE_NAME="$(basename "${i}")"
             if [ "$(stat -c "%s" "${i}")" -lt "${THRESHOLD}" ]; then
-              FILES="${FILES}<li><a href="https://israellopezdeveloper.github.io/israel-aur/x86_64/$i">${i}</a></li>"
+              FILES="${FILES}<li><a href="https://israellopezdeveloper.github.io/israel-aur/$i">${FILE_NAME}</a></li>"
             else
-              FILES="${FILES}<li><a href="https://kogaslife.duckdns.org/israrepo/x86_64/$i">${i}</a></li>"
+              FILES="${FILES}<li><a href="https://kogaslife.duckdns.org/israrepo/$i">${FILE_NAME}</a></li>"
             fi
           done
           cat > x86_64/index.html <<'HTML'

@@ -15,7 +15,7 @@ jobs:
       image: archlinux:latest
     steps:
       - name: Install packages
-        run: pacman -Syu --noconfirm git openssh sudo debugedit base-devel curl
+        run: pacman -Syu --noconfirm git openssh sudo debugedit base-devel curl jq
       - name: Checkout
         uses: actions/checkout@v4
         with:
@@ -103,7 +103,14 @@ jobs:
           fi
           repo-add -s -k "${GPG_KEYID}" -R \
             "x86_64/${REPO_NAME}.db.tar.gz" \
-            x86_64/*.pkg.tar.zst
+            x86_64/*.pkg.tar.zst >/dev/null 2>log.log \
+            && echo " ==> DONE!!" \
+            || {
+               echo " ==> FAILED";
+               cat log.log;
+               false;
+            }
+          rm log.log
           rm -rf x86_64/${REPO_NAME}.db x86_64/${REPO_NAME}.files || true
           cp "x86_64/${REPO_NAME}.db.tar.gz"    "x86_64/${REPO_NAME}.db"
           cp "x86_64/${REPO_NAME}.files.tar.gz" "x86_64/${REPO_NAME}.files"
@@ -155,7 +162,7 @@ jobs:
             success=0
             while [ $retry -le $max_retries ]; do
               echo "==> Uploading $f (attempt $retry/$max_retries)"
-              if curl -sS -X POST -F "fileToUpload=@${f}" "$UPLOAD_URL"; then
+              if curl -sS -X POST -F "fileToUpload=@${f}" "$UPLOAD_URL" | jq; then
                 echo "✅ Upload succeeded for $f"
                 success=1
                 break
@@ -189,6 +196,7 @@ jobs:
           GITHUB_WORKSPACE: ${{ github.workspace }}
           GITHUB_REPOSITORY: ${{ github.repository }}
         run: |
+          git config --global --add safe.directory "${GITHUB_WORKSPACE}"
           echo "Workspace: ${GITHUB_WORKSPACE}"
           ls -lisah "${GITHUB_WORKSPACE}/x86_64"
           cd "${GITHUB_WORKSPACE}"

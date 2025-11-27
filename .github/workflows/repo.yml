@@ -145,7 +145,7 @@ jobs:
               <link href="../style.css" rel="stylesheet" />
             </head>
             <body>
-              <h1>Israel's Repo (/x86_64)</h1>
+              <h1 class="retrocursor">Israel's Repo (/x86_64)</h1>
               <table>
                 <thead>
                   <tr>

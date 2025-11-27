@@ -44,20 +44,37 @@ jobs:
           for pkg in ${AUR_PACKAGES[@]}; do
             echo "========================== ${pkg} =========================="
             sudo -u builder bash -c " \
-              git clone \"https://aur.archlinux.org/${pkg}.git\" >/dev/null 2>&1; \
+              git clone \"https://aur.archlinux.org/${pkg}.git\" \
+              >/dev/null 2>log.log \
+                && echo '  ==> Cloned OK' \
+                || { \
+                  echo ' ==> Cloning KO'; \
+                  cat log.log; \
+                  false; \
+                }; \
               cd \"${pkg}\"; \
-              makepkg -sf --noconfirm --skippgpcheck >/dev/null 2>&1 \
-                && echo '  ==> PACKAGE created' \
-                || echo '  ==> ERROR on creating package'; \
+              makepkg -sf --noconfirm --skippgpcheck \
+              >/dev/null 2>log.log \
+                && echo '  ==> Created OK' \
+                || { \
+                  echo '  ==> Creating KO'; \
+                  cat log.log; \
+                  false; \
+                }; \
               mv *.tar.zst ..;"
             rm *-debug* >/dev/null 2>&1 || true
-            pacman -U --noconfirm ./*.tar.zst >/dev/null 2>&1 \
-              && echo '  ==> PACKAGE installed!!!!!' \
-              || echo '  ==> ERROR on installing package'
+            pacman -U --noconfirm ./*.tar.zst
+            >/dev/null 2>log.log \
+              && echo '  ==> Installed OK!!!!!' \
+              || {
+                echo '  ==> Installing KO';
+                cat log.log;
+                false;
+              }
             mv *.tar.zst "${CURR_DIR}/x86_64"
-            rm -rf "${pkg}" >/dev/null 2>&1 || true
+            rm -rf "${pkg}" log.log >/dev/null 2>&1 || true
             echo "========================== ${pkg} =========================="
-            echo -e ".\n.\n.\n.\n.\n.\n"
+            echo -e ".\n.\n.\n"
           done
           cd "${CURR_DIR}"
           for pkg in x86_64/*.pkg.tar.*; do
@@ -66,8 +83,8 @@ jobs:
               continue
             fi
             gpg --batch --yes --pinentry-mode loopback \
-              --local-user "$GPG_KEYID" \
-              --passphrase "$GPG_PASSPHRASE" \
+              --local-user "${GPG_KEYID}" \
+              --passphrase "${GPG_PASSPHRASE}" \
               --detach-sign "$pkg" >/dev/null 2>&1
           done
           ls -l x86_64
@@ -82,7 +99,7 @@ jobs:
             echo "No hay paquetes; se omite reconstrucción de la DB."
             exit 0
           fi
-          repo-add -s -k "$GPG_KEYID" -R \
+          repo-add -s -k "${GPG_KEYID}" -R \
             "x86_64/${REPO_NAME}.db.tar.gz" \
             x86_64/*.pkg.tar.zst
           rm -rf x86_64/${REPO_NAME}.db x86_64/${REPO_NAME}.files || true
@@ -90,7 +107,7 @@ jobs:
           cp "x86_64/${REPO_NAME}.files.tar.gz" "x86_64/${REPO_NAME}.files"
           FILES=""
           THRESHOLD=$((100*1024*1024))
-          for i in $(ls x86_64); do
+          for i in x86_64/*; do
             if [ "$i" = "index.html" ]; then
               continue
             fi

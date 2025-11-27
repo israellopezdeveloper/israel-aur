@@ -152,16 +152,16 @@ jobs:
                     <th>File</th>
                     <th>Size</th>
                   </tr>
-                  <tbody>
-                    <tr>
-                      <td><a href="https://israellopezdeveloper.github.io/israel-aur/x86_64">/x86_64</a></td>
-                      <td>Arch Linux personal packages and it's dependencies</td>
-                    </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><a href="..">..</a></td>
+                    <td></td>
+                  </tr>
           HTML
           echo "${FILES}" >> x86_64/index.html
           cat >> x86_64/index.html <<'HTML'
-                  </tbody>
-                </thead>
+                </tbody>
               </table>
             </body>
           </html>
@@ -229,8 +229,6 @@ jobs:
           rm -rf /tmp/gh-pages
           git worktree add /tmp/gh-pages gh-pages
           cd /tmp/gh-pages
-          # Borramos todo lo existente en gh-pages excepto el .git
-          find . -mindepth 1 -maxdepth 1 ! -name '.git' -exec rm -rf {} +
           # Copiamos el contenido generado
           mkdir -p x86_64
           cp -r "${GITHUB_WORKSPACE}/x86_64/"* x86_64/

@@ -16,22 +16,26 @@ jobs:
     steps:
       - name: Install packages
         run: pacman -Syu --noconfirm git openssh sudo debugedit base-devel curl jq
+
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
           persist-credentials: true
+
       - name: Import GPG key
         uses: crazy-max/ghaction-import-gpg@v6
         with:
           gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
           passphrase: ${{ secrets.GPG_PASSPHRASE }}
+
       - name: Create non-root user
         run: |
           useradd -m builder
           passwd -d builder
           echo "builder ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
           chown -R builder:builder .
+
       - name: Sign any unsigned packages
         env:
           GPG_KEYID: ${{ secrets.GPG_KEYID }}
@@ -99,6 +103,63 @@ jobs:
           rm log.log || true
           ls -l x86_64
 
+      - name: Upload repo files
+        env:
+          UPLOAD_URL: https://kogaslife.duckdns.org/israrepo/upload.php
+        run: |
+          set -e
+          echo "Subiendo ficheros de x86_64/ a ${UPLOAD_URL}"
+          THRESHOLD=$((100*1024*1024))
+          for f in x86_64/*; do
+            [ -f "$f" ] || continue
+            if [ "$(stat -c "%s" "${f}")" -lt "${THRESHOLD}" ]; then
+              continue
+            fi
+            max_retries=6
+            retry=1
+            success=0
+            while [ $retry -le $max_retries ]; do
+              echo "==> Uploading $f (attempt $retry/$max_retries)"
+              if curl -sS -X POST -F "fileToUpload=@${f}" "$UPLOAD_URL" | jq; then
+                echo "✅ Upload succeeded for $f"
+                success=1
+                break
+              else
+                echo "❌ Upload failed for $f"
+              fi
+              retry=$((retry + 1))
+              sleep 2
+            done
+            if [ $success -ne 1 ]; then
+              echo "🚨 Upload failed after $max_retries attempts for $f"
+            fi
+            rm -rf "${f}"
+
+            f="${f}.sig"
+            [ -f "$f" ] || continue
+            if [ "$(stat -c "%s" "${f}")" -lt "${THRESHOLD}" ]; then
+              continue
+            fi
+            max_retries=6
+            retry=1
+            success=0
+            while [ $retry -le $max_retries ]; do
+              echo "==> Uploading $f (attempt $retry/$max_retries)"
+              if curl -sS -X POST -F "fileToUpload=@${f}" "$UPLOAD_URL" | jq; then
+                echo "✅ Upload succeeded for $f"
+                success=1
+                break
+              else
+                echo "❌ Upload failed for $f"
+              fi
+              retry=$((retry + 1))
+              sleep 2
+            done
+            if [ $success -ne 1 ]; then
+              echo "🚨 Upload failed after $max_retries attempts for $f"
+            fi
+            rm -rf "${f}"
+          done
       - name: Rebuild signed repo database
         env:
           REPO_NAME: israrepo
@@ -166,39 +227,6 @@ jobs:
             </body>
           </html>
           HTML
-
-      - name: Upload repo files
-        env:
-          UPLOAD_URL: https://kogaslife.duckdns.org/israrepo/upload.php
-        run: |
-          set -e
-          echo "Subiendo ficheros de x86_64/ a ${UPLOAD_URL}"
-          THRESHOLD=$((100*1024*1024))
-          for f in x86_64/*; do
-            [ -f "$f" ] || continue
-            if [ "$(stat -c "%s" "${f}")" -lt "${THRESHOLD}" ]; then
-              continue
-            fi
-            max_retries=6
-            retry=1
-            success=0
-            while [ $retry -le $max_retries ]; do
-              echo "==> Uploading $f (attempt $retry/$max_retries)"
-              if curl -sS -X POST -F "fileToUpload=@${f}" "$UPLOAD_URL" | jq; then
-                echo "✅ Upload succeeded for $f"
-                success=1
-                break
-              else
-                echo "❌ Upload failed for $f"
-              fi
-              retry=$((retry + 1))
-              sleep 2
-            done
-            if [ $success -ne 1 ]; then
-              echo "🚨 Upload failed after $max_retries attempts for $f"
-            fi
-            rm -rf "${f}"
-          done
 
       - name: Set SSH
         env:

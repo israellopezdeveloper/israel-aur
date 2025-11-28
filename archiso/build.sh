@@ -119,7 +119,7 @@ fi
 sed -i 's/[\#]*Color/Color\nILoveCandy/' "${SYSTEM_PACMAN_CONF}"
 sed -i 's/[\#]*NoProgressBar/#NoProgressBar/' "${SYSTEM_PACMAN_CONF}"
 sed -i 's/[\#]*VerbosePkgLists/#VerbosePkgLists/' "${SYSTEM_PACMAN_CONF}"
-sed -i 's/[\#]*ParallelDownloads.*/ParallelDownloads = 8/' "${SYSTEM_PACMAN_CONF}"
+sed -i 's/[\#]*ParallelDownloads.*/ParallelDownloads = 2/' "${SYSTEM_PACMAN_CONF}"
 sed -i 's/[\#]*DownloadUser.*/#DownloadUser = alpm/' "${SYSTEM_PACMAN_CONF}"
 sed -i 's/[\#]*DisableSandbox/#DisableSandbox/' "${SYSTEM_PACMAN_CONF}"
 enable_multilib
@@ -142,7 +142,7 @@ if [ "${SKIP_DOWNLOAD}" = false ]; then
   echo "Descargando paquetes"
   echo "===================="
   pacman -Syyu --noconfirm reflector >/dev/null 2>&1
-  reflector --verbose --latest 15 --sort rate --save /etc/pacman.d/mirrorlist >/dev/null 2>&1
+  reflector --verbose --latest 4 --sort rate --save /etc/pacman.d/mirrorlist >/dev/null 2>&1
   pacman -Syyu --noconfirm archiso >/dev/null 2>&1
   "${REPO_SCRIPT}" "${PACKAGES_LIST}" "${REPO_DIR}"
 fi

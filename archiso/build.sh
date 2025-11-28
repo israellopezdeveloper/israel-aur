@@ -33,16 +33,15 @@ rm -rf "${OUT_DIR:?}"/*
 sed "s&__WORKING_DIRECTORY__&${BASE_DIR}&" "${ARCHISO_PACMAN}.bak" > "${ARCHISO_PACMAN}"
 echo "👌 OK"
 
-echo
-echo "Añadiendo clave de 'israrepo'"
-echo "============================="
+echo "."
+echo "Preparando pacman local"
+echo "======================="
 curl -s -o "${GPG_DIR}/israel-repo.asc" "$KEY_URL"
 gpg --dearmor "${GPG_DIR}/israel-repo.asc"
 mv "${GPG_DIR}/israel-repo.asc.gpg" "${GPG_DIR}/israel-repo.gpg"
 FPR=$(gpg --show-keys --with-colons "${GPG_DIR}/israel-repo.asc" \
       | awk -F: '/^fpr:/ {print $10; exit}')
 echo "${FPR}:4:" > "${GPG_DIR}/israel-repo-trusted"
-echo "👌 OK"
 
 restore_pacman_conf() {
   if [[ -n "${PACMAN_BACKUP}" && -f "${PACMAN_BACKUP}" ]]; then
@@ -106,9 +105,6 @@ EOF
   fi
 }
 
-echo
-echo "Preparando pacman local"
-echo "======================="
 if [[ -f "${SYSTEM_PACMAN_CONF}" ]]; then
   PACMAN_BACKUP="$(mktemp /tmp/pacman.conf.backup.XXXXXX)"
   cp "${SYSTEM_PACMAN_CONF}" "${PACMAN_BACKUP}"
@@ -138,12 +134,15 @@ echo "👌 OK"
 
 if [ "${SKIP_DOWNLOAD}" = false ]; then
   rm -rf "${REPO_DIR:?}"/*
-  echo
+  echo "."
   echo "Descargando paquetes"
   echo "===================="
-  pacman -Syyu --noconfirm reflector >/dev/null 2>&1
-  reflector --verbose --latest 4 --sort rate --save /etc/pacman.d/mirrorlist >/dev/null 2>&1
-  pacman -Syyu --noconfirm archiso >/dev/null 2>&1
+  pacman -Syyu --noconfirm reflector gnupg gpgme archlinux-keyring
+  rm -rf /etc/pacman.d/gnupg
+  pacman-key --init
+  pacman-key --populate archlinux
+  reflector --verbose --latest 4 --sort rate --save /etc/pacman.d/mirrorlist
+  pacman -Syyu --noconfirm archiso
   "${REPO_SCRIPT}" "${PACKAGES_LIST}" "${REPO_DIR}"
 fi
 

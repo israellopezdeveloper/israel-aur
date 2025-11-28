@@ -8,6 +8,7 @@ GPG_DIR="$(realpath "${BASE_DIR}/airootfs/usr/share/pacman/keyrings")"
 WORK_DIR="$(realpath "${BASE_DIR}/../work")"
 OUT_DIR="$(realpath "${BASE_DIR}/../out")"
 REPO_DIR="$(realpath "${BASE_DIR}/airootfs/opt/localrepo")"
+mkdir -p "${REPO_DIR}"
 REPO_SCRIPT="$(realpath "${REPO_DIR}/../deplist.sh")"
 PACKAGES_LIST="$(realpath "${BASE_DIR}/packages.txt")"
 

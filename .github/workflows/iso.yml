@@ -20,7 +20,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pacman -Syu --noconfirm archiso curl gnupg squashfs-tools coreutils
+          pacman -Syu --noconfirm archiso curl gnupg squashfs-tools
 
       - name: Make build script executable
         run: chmod +x archiso/build.sh
@@ -30,7 +30,7 @@ jobs:
         run: |
           pwd
           ls -lisah
-          realpath airootfs/opt/localrepo/../deplist.sh
+          ls -l airootfs/opt/localrepo/../deplist.sh
           ./build.sh
 
       - name: Find generated ISO

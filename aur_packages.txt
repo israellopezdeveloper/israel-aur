@@ -25,3 +25,4 @@ vscode-langservers-extracted
 wlogout
 yay
 zsh-theme-powerlevel10k-git
+catppuccin-gtk-theme-mocha

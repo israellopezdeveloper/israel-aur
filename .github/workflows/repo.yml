@@ -136,7 +136,6 @@ jobs:
             rm -rf "${f}"
 
             f="${f}.sig"
-            echo "=================>> ${f}"
             [ -f "$f" ] || continue
             max_retries=6
             retry=1

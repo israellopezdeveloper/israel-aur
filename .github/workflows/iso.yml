@@ -20,7 +20,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pacman -Syu --noconfirm archiso curl gnupg squashfs-tools
+          pacman -Syu --noconfirm archiso curl gnupg squashfs-tools coreutils
 
       - name: Make build script executable
         run: chmod +x archiso/build.sh

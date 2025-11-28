@@ -36,6 +36,11 @@ echo "👌 OK"
 echo "."
 echo "Preparando pacman local"
 echo "======================="
+pacman -Syyu --noconfirm gnupg gpgme archlinux-keyring
+rm -rf /etc/pacman.d/gnupg
+pacman-key --init
+pacman-key --populate archlinux
+pacman -Syyu --noconfirm archiso
 curl -s -o "${GPG_DIR}/israel-repo.asc" "$KEY_URL"
 gpg --dearmor "${GPG_DIR}/israel-repo.asc"
 mv "${GPG_DIR}/israel-repo.asc.gpg" "${GPG_DIR}/israel-repo.gpg"
@@ -137,11 +142,6 @@ if [ "${SKIP_DOWNLOAD}" = false ]; then
   echo "."
   echo "Descargando paquetes"
   echo "===================="
-  pacman -Syyu --noconfirm gnupg gpgme archlinux-keyring
-  rm -rf /etc/pacman.d/gnupg
-  pacman-key --init
-  pacman-key --populate archlinux
-  pacman -Syyu --noconfirm archiso
   "${REPO_SCRIPT}" "${PACKAGES_LIST}" "${REPO_DIR}"
 fi
 

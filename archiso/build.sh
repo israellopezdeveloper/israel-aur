@@ -10,8 +10,6 @@ OUT_DIR="$(realpath "${BASE_DIR}/../out")"
 REPO_DIR="$(realpath "${BASE_DIR}/airootfs/opt/localrepo")"
 REPO_SCRIPT="$(realpath "${REPO_DIR}/../deplist.sh")"
 PACKAGES_LIST="$(realpath "${BASE_DIR}/packages.txt")"
-USER_NAME="$(id -un)"
-GROUP_NAME="$(id -gn)"
 
 
 SKIP_DOWNLOAD=false
@@ -26,9 +24,6 @@ mkdir -p "${WORK_DIR}"
 mkdir -p "${OUT_DIR}"
 mkdir -p "${GPG_DIR}"
 mkdir -p "${REPO_DIR}"
-chown 1000:1000 -R "${BASE_DIR}"
-chown 1000:1000 -R "${OUT_DIR}"
-chown 1000:1000 -R "${WORK_DIR}"
 rm -rf "${WORK_DIR:?}"/*
 rm -rf "${OUT_DIR:?}"/*
 echo "👌 OK"
@@ -56,9 +51,4 @@ fi
 
 MKSQUASHFS_OPTIONS="-processors 4" mkarchiso -v -w "${WORK_DIR}" -o "${OUT_DIR}" "${BASE_DIR}"
 
-chown 1000:1000 -R "${BASE_DIR}"
-chown 1000:1000 -R "${OUT_DIR}"
-chown 1000:1000 -R "${WORK_DIR}"
 rm -rf "${WORK_DIR:?}"/*
-sudo -u "#1000" mv "${OUT_DIR}/"*.iso "${HOME}/Descargas/archlinux.iso"
-notify-send --urgency normal "Building ISO..." "Ya se ha creado la imagen" || true

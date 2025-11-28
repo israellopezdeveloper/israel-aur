@@ -85,9 +85,7 @@ while ((${#QUEUE[@]} > 0)); do
     done
 done
 
-# printf '%s\n' "${FINAL[@]}" | sort -u > "${PKGFILE}"
 mkdir -p "${DEST}"
-notify-send --urgency normal "Building ISO..." "Se han listado todos los paquetes" || true
 
 sudo pacman -Syyww --noconfirm --overwrite --needed --asdeps \
     --cachedir ${DEST} $(cat "${PKGFILE}")

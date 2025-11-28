@@ -1,0 +1,72 @@
+name: Build ArchISO and Upload
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-upload:
+    runs-on: ubuntu-latest
+
+    container:
+      image: archlinux:latest
+
+    env:
+      UPLOAD_URL: https://kogaslife.duckdns.org/israrepo/uploadiso.php
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          pacman -Syu --noconfirm archiso curl gnupg squashfs-tools
+
+      - name: Make build script executable
+        run: chmod +x archiso/build.sh
+
+      - name: Build ISO
+        working-directory: archiso
+        run: ./build.sh
+
+      - name: Find generated ISO
+        id: find_iso
+        run: |
+          # Ajusta el patrón si el nombre del ISO es distinto
+          ISO_PATH=$(ls -1 out/*.iso | head -n 1)
+          if [ -z "$ISO_PATH" ]; then
+            echo "No se encontró ningún ISO en out/*.iso"
+            exit 1
+          fi
+          echo "ISO_PATH=$ISO_PATH"
+          echo "iso_path=$ISO_PATH" >> "$GITHUB_OUTPUT"
+
+      - name: Upload ISO with retries
+        env:
+          ISO_PATH: ${{ steps.find_iso.outputs.iso_path }}
+          UPLOAD_URL: ${{ env.UPLOAD_URL }}
+        run: |
+          attempts=0
+          max_retries=6  # Máximo de 6 reintentos (7 intentos en total contando el primero)
+
+          while true; do
+            attempts=$((attempts + 1))
+            echo "Intento de subida $attempts..."
+
+            # Ajusta -F "file=@..." si tu PHP espera otro nombre de campo
+            if curl --fail --show-error -F "file=@${ISO_PATH}" "${UPLOAD_URL}"; then
+              echo "✅ Subida completada correctamente."
+              break
+            fi
+
+            if [ "$attempts" -gt "$max_retries" ]; then
+              echo "❌ Fallo al subir tras $max_retries reintentos."
+              exit 1
+            fi
+
+            echo "⚠️ Fallo en la subida, reintentando en 15 segundos..."
+            sleep 15
+          done
+

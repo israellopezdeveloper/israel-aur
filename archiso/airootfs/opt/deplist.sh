@@ -51,8 +51,6 @@ get_deps() {
 }
 
 while ((${#QUEUE[@]} > 0)); do
-    echo -ne "\r                                                  "
-    echo -ne "\r${#QUEUE[@]}/${#SEEN[@]}" >&2
     pkg="${QUEUE[0]}"
     QUEUE=("${QUEUE[@]:1}")  # pop
 

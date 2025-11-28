@@ -30,6 +30,7 @@ jobs:
         run: |
           pwd
           ls -lisah
+          realpath airootfs/opt/localrepo/../deplist.sh
           ./build.sh
 
       - name: Find generated ISO

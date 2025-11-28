@@ -30,6 +30,7 @@ jobs:
         run: |
           pwd
           ls -lisah
+          ./build.sh
 
       - name: Find generated ISO
         id: find_iso

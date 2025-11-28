@@ -28,9 +28,6 @@ jobs:
       - name: Build ISO
         working-directory: archiso
         run: |
-          pwd
-          ls -lisah
-          ls -l airootfs/opt/localrepo/
           ./build.sh
 
       - name: Find generated ISO

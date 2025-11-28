@@ -10,6 +10,7 @@ jobs:
 
     container:
       image: archlinux:latest
+      options: --user root
 
     env:
       UPLOAD_URL: https://kogaslife.duckdns.org/israrepo/uploadiso.php

@@ -30,11 +30,8 @@ mkdir -p "${GPG_DIR}"
 mkdir -p "${REPO_DIR}"
 rm -rf "${WORK_DIR:?}"/*
 rm -rf "${OUT_DIR:?}"/*
-echo "👌 OK"
-
-echo "Cambiando paths"
-echo "==============="
 sed "s&__WORKING_DIRECTORY__&${BASE_DIR}&" "${ARCHISO_PACMAN}.bak" > "${ARCHISO_PACMAN}"
+echo "👌 OK"
 
 echo
 echo "Añadiendo clave de 'israrepo'"
@@ -55,6 +52,7 @@ restore_pacman_conf() {
     cp "${PACMAN_BACKUP}" "${SYSTEM_PACMAN_CONF}"
     rm -f "${PACMAN_BACKUP}"
   fi
+  chown -R ${TARGET_UID}:${TARGET_GID} "${BASE_DIR}"
 }
 
 trap restore_pacman_conf EXIT
@@ -121,7 +119,7 @@ fi
 sed -i 's/[\#]*Color/Color\nILoveCandy/' "${SYSTEM_PACMAN_CONF}"
 sed -i 's/[\#]*NoProgressBar/#NoProgressBar/' "${SYSTEM_PACMAN_CONF}"
 sed -i 's/[\#]*VerbosePkgLists/#VerbosePkgLists/' "${SYSTEM_PACMAN_CONF}"
-sed -i 's/[\#]*ParallelDownloads.*/ParallelDownloads = 5/' "${SYSTEM_PACMAN_CONF}"
+sed -i 's/[\#]*ParallelDownloads.*/ParallelDownloads = 8/' "${SYSTEM_PACMAN_CONF}"
 sed -i 's/[\#]*DownloadUser.*/#DownloadUser = alpm/' "${SYSTEM_PACMAN_CONF}"
 sed -i 's/[\#]*DisableSandbox/#DisableSandbox/' "${SYSTEM_PACMAN_CONF}"
 enable_multilib
@@ -144,8 +142,8 @@ if [ "${SKIP_DOWNLOAD}" = false ]; then
   echo "Descargando paquetes"
   echo "===================="
   pacman -Syyu --noconfirm reflector >/dev/null 2>&1
-  reflector --verbose --latest 5 --sort rate --save /etc/pacman.d/mirrorlist >/dev/null 2>&1
-  pacman -Syyu --noconfirm >/dev/null 2>&1
+  reflector --verbose --latest 15 --sort rate --save /etc/pacman.d/mirrorlist >/dev/null 2>&1
+  pacman -Syyu --noconfirm archiso >/dev/null 2>&1
   "${REPO_SCRIPT}" "${PACKAGES_LIST}" "${REPO_DIR}"
 fi
 
@@ -153,3 +151,4 @@ MKSQUASHFS_OPTIONS="-processors 4" mkarchiso -v -w "${WORK_DIR}" -o "${OUT_DIR}"
 
 rm -rf "${WORK_DIR:?}"/*
 rm -rf "${ARCHISO_PACMAN}"
+chown -R ${TARGET_UID}:${TARGET_GID} "${OUT_DIR}"

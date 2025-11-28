@@ -27,8 +27,7 @@ jobs:
 
       - name: Build ISO
         working-directory: archiso
-        run: |
-          ./build.sh
+        run: ./build.sh
 
       - name: Find generated ISO
         id: find_iso

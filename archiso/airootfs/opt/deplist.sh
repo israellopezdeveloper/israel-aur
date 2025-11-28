@@ -87,7 +87,7 @@ done
 
 mkdir -p "${DEST}"
 
-sudo pacman -Syyww --noconfirm --overwrite --needed --asdeps \
+pacman -Syyww --noconfirm --overwrite --needed --asdeps \
     --cachedir ${DEST} $(cat "${PKGFILE}")
 cd "${DEST}"
 rm localrepo.* || true

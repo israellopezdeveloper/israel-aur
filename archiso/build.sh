@@ -137,11 +137,10 @@ if [ "${SKIP_DOWNLOAD}" = false ]; then
   echo "."
   echo "Descargando paquetes"
   echo "===================="
-  pacman -Syyu --noconfirm reflector gnupg gpgme archlinux-keyring
+  pacman -Syyu --noconfirm gnupg gpgme archlinux-keyring
   rm -rf /etc/pacman.d/gnupg
   pacman-key --init
   pacman-key --populate archlinux
-  reflector --verbose --latest 4 --sort rate --save /etc/pacman.d/mirrorlist
   pacman -Syyu --noconfirm archiso
   "${REPO_SCRIPT}" "${PACKAGES_LIST}" "${REPO_DIR}"
 fi

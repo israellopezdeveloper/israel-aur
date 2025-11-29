@@ -11,7 +11,7 @@ jobs:
     container:
       image: archlinux:latest
       options: >-
-        --cpus=10
+        --cpus=3
         --memory=8g --memory-swap=8g
 
     env:

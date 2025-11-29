@@ -13,7 +13,7 @@ ARCH_IMAGE="archlinux:latest"
 # Usa sudo si hace falta (en GitHub Actions seguro que sí)
 DOCKER_BIN="${DOCKER_BIN:-sudo podman}"
 
-${DOCKER_BIN} run -it --rm \
+${DOCKER_BIN} run --rm \
   --privileged \
   --cap-add=SYS_ADMIN \
   --cap-add=SYS_CHROOT \

@@ -6,7 +6,7 @@ on:
 
 jobs:
   build-and-upload:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-l
 
     env:
       UPLOAD_URL: https://kogaslife.duckdns.org/israrepo/uploadiso.php

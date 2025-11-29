@@ -34,15 +34,17 @@ sed "s&__WORKING_DIRECTORY__&${BASE_DIR}&" "${ARCHISO_PACMAN}.bak" > "${ARCHISO_
 echo "👌 OK"
 
 echo "."
+echo "."
 echo "Preparando pacman local"
 echo "======================="
-pacman -Syyu --noconfirm gnupg gpgme archlinux-keyring
+echo "  - Instalando dependencias en el sistema base"
+pacman -Syyu --noconfirm gnupg gpgme archlinux-keyring archiso > /dev/null 2>&1
 rm -rf /etc/pacman.d/gnupg
-pacman-key --init
-pacman-key --populate archlinux
-pacman -Syyu --noconfirm archiso
-curl -s -o "${GPG_DIR}/israel-repo.asc" "$KEY_URL"
-gpg --dearmor "${GPG_DIR}/israel-repo.asc"
+pacman-key --init > /dev/null 2>&1
+pacman-key --populate archlinux > /dev/null 2>&1
+echo "  - Importando clave de israrepo"
+curl -s -o "${GPG_DIR}/israel-repo.asc" "$KEY_URL" > /dev/null 2>&1
+gpg -q --dearmor "${GPG_DIR}/israel-repo.asc" > /dev/null 2>&1
 mv "${GPG_DIR}/israel-repo.asc.gpg" "${GPG_DIR}/israel-repo.gpg"
 FPR=$(gpg --show-keys --with-colons "${GPG_DIR}/israel-repo.asc" \
       | awk -F: '/^fpr:/ {print $10; exit}')
@@ -62,21 +64,17 @@ restore_pacman_conf() {
 trap restore_pacman_conf EXIT
 
 enable_multilib() {
+  echo "  - Habilitando multilib"
   local conf="${SYSTEM_PACMAN_CONF}"
 
   if grep -q '^\[multilib\]' "${conf}"; then
-    echo "multilib ya está habilitado."
     return
   fi
 
   if grep -q '^[[:space:]]*#[[:space:]]*\[multilib\]' "${conf}"; then
-    echo "Descomentando repositorio multilib..."
-    # Descomenta la cabecera [multilib]
     sed -i 's/^[[:space:]]*#[[:space:]]*\[multilib\]/[multilib]/' "${conf}"
-    # Descomenta el Include dentro del bloque multilib hasta la siguiente línea vacía
     sed -i '/^\[multilib\]/,/^$/ s/^[[:space:]]*#[[:space:]]*Include/Include/' "${conf}"
   else
-    echo "Añadiendo repositorio multilib al final de pacman.conf..."
     cat <<'EOF' >> "${conf}"
 
 [multilib]
@@ -86,22 +84,19 @@ EOF
 }
 
 ensure_repo() {
+  echo "  - Habilitando ${1}"
   local name="$1"
   local server_url="$2"
   local conf="${SYSTEM_PACMAN_CONF}"
 
   if grep -q "^\[${name}\]" "${conf}"; then
-    echo "Repositorio ${name} ya está habilitado."
     return
   fi
 
   if grep -q "^[[:space:]]*#[[:space:]]*\[${name}\]" "${conf}"; then
-    echo "Descomentando repositorio ${name}..."
     sed -i "s/^[[:space:]]*#[[:space:]]*\[${name}\]/[${name}]/" "${conf}"
-    # Descomentar líneas de Server dentro del bloque del repo hasta línea vacía
     sed -i "/^\[${name}\]/,/^$/ s/^[[:space:]]*#[[:space:]]*Server/Server/" "${conf}"
   else
-    echo "Añadiendo repositorio ${name} al final de pacman.conf..."
     cat <<EOF >> "${conf}"
 
 [${name}]
@@ -117,6 +112,7 @@ else
   echo "❌ No se encontró ${SYSTEM_PACMAN_CONF}. Abortando."
   exit 1
 fi
+echo "  - Customizando opciones"
 sed -i 's/[\#]*Color/Color\nILoveCandy/' "${SYSTEM_PACMAN_CONF}"
 sed -i 's/[\#]*NoProgressBar/#NoProgressBar/' "${SYSTEM_PACMAN_CONF}"
 sed -i 's/[\#]*VerbosePkgLists/#VerbosePkgLists/' "${SYSTEM_PACMAN_CONF}"
@@ -126,11 +122,8 @@ sed -i 's/[\#]*DisableSandbox/#DisableSandbox/' "${SYSTEM_PACMAN_CONF}"
 enable_multilib
 ensure_repo "israrepo"   "https://israellopezdeveloper.github.io/israel-aur/\$arch"
 ensure_repo "israbigrepo" "https://kogaslife.duckdns.org/israrepo/\$arch"
-echo "Inicializando keyring de pacman..."
-pacman-key --init >/dev/null 2>&1
-pacman-key --populate archlinux >/dev/null 2>&1
+echo "  - Añadiendo la clave de israrepo"
 if ! pacman-key --list-keys "${FPR}" >/dev/null 2>&1; then
-  echo "Añadiendo clave israel-repo al keyring local..."
   pacman-key --add "${GPG_DIR}/israel-repo.asc" >/dev/null 2>&1
 fi
 pacman-key --lsign-key "${FPR}" >/dev/null 2>&1
@@ -138,15 +131,20 @@ echo "👌 OK"
 
 
 if [ "${SKIP_DOWNLOAD}" = false ]; then
-  rm -rf "${REPO_DIR:?}"/*
   echo "."
   echo "Descargando paquetes"
   echo "===================="
   "${REPO_SCRIPT}" "${PACKAGES_LIST}" "${REPO_DIR}"
 fi
 
+echo "."
+echo "."
+echo "Creando ISO"
+echo "===================="
 MKSQUASHFS_OPTIONS="-processors 4" mkarchiso -v -w "${WORK_DIR}" -o "${OUT_DIR}" "${BASE_DIR}"
 
 rm -rf "${WORK_DIR:?}"/*
 rm -rf "${ARCHISO_PACMAN}"
+echo "chown -R ${TARGET_UID}:${TARGET_GID}"
 chown -R ${TARGET_UID}:${TARGET_GID} "${OUT_DIR}"
+chown -R ${TARGET_UID}:${TARGET_GID} "${BASE_DIR}"

@@ -85,10 +85,40 @@ done
 
 mkdir -p "${DEST}"
 
-pacman -Syyww --noconfirm --overwrite --needed --asdeps \
-    --cachedir ${DEST} $(cat "${PKGFILE}")
+MAX_PACMAN_RETRIES=6
+PACMAN_RETRIES_COUNT=0
+while [ $PACMAN_RETRIES_COUNT -lt $MAX_PACMAN_RETRIES ]; do
+    PACMAN_RETRIES_COUNT=$((PACMAN_RETRIES_COUNT + 1))
+    URL="https://kogaslife.duckdns.org/israrepo/x86_64/"
+    MAX_RETRIES=6
+    RETRY_COUNT=0
+    SLEEP_TIME=2
+    while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+        RETRY_COUNT=$((RETRY_COUNT + 1))
+        HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -L "${URL}")
+        if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 400 ]; then
+            break
+        else
+            if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
+                sleep $SLEEP_TIME
+            else
+                exit 1
+            fi
+        fi
+    done
+
+    if pacman -Syyww --noconfirm --overwrite --needed --asdeps --cachedir "${DEST}" $(cat "${PKGFILE}"); then
+        break
+    else
+        if [ $PACMAN_RETRIES_COUNT -lt $MAX_PACMAN_RETRIES ]; then
+            sleep $SLEEP_TIME
+        else
+            exit 1
+        fi
+    fi
+done
 cd "${DEST}"
 rm localrepo.* || true
-repo-add localrepo.db.tar.gz ./*.pkg.tar.zst
+repo-add localrepo.db.tar.gz ./*.pkg.tar.zst > /dev/null 2>&1
 
 

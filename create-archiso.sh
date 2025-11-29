@@ -1,8 +1,19 @@
 #!/usr/bin/env bash
+set -euo pipefail
 
-BASE_DIR="$(dirname "$(realpath "${0}")")"
+# Directorio donde está este script
+BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-podman run --rm \
+# Asegurarse de que existen los directorios de trabajo/salida en el host
+mkdir -p "${BASE_DIR}/out" "${BASE_DIR}/work"
+
+# Imagen de Arch (con tag explícito mejor)
+ARCH_IMAGE="archlinux:latest"
+
+# Usa sudo si hace falta (en GitHub Actions seguro que sí)
+DOCKER_BIN="${DOCKER_BIN:-podman}"
+
+${DOCKER_BIN} run --rm \
   --privileged \
   -v "${BASE_DIR}/archiso:/archiso" \
   -v "${BASE_DIR}/out:/out" \
@@ -12,8 +23,13 @@ podman run --rm \
   -e TARGET_UID="$(id -u)" \
   -e TARGET_GID="$(id -g)" \
   -w "/archiso" \
-  archlinux \
-  ./build.sh
+  "${ARCH_IMAGE}" \
+  bash -lc '
+    set -e
+    pacman -Syu --noconfirm archiso curl gnupg squashfs-tools
+    yes | pacman -Scc || true
 
-rm -rf iso/*.iso
-mv out/*.iso iso/isra-archlinux.iso >/dev/null 2>&1
+    chmod +x ./build.sh
+    ./build.sh
+  '
+

@@ -8,12 +8,6 @@ jobs:
   build-and-upload:
     runs-on: ubuntu-latest
 
-    container:
-      image: archlinux:latest
-      options: >-
-        --cpus=3
-        --memory=8g --memory-swap=8g
-
     env:
       UPLOAD_URL: https://kogaslife.duckdns.org/israrepo/uploadiso.php
 
@@ -21,41 +15,24 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Prepare work/out and UID/GID env
-        run: |
-          mkdir -p /work /out
-          chown "$(id -u)":"$(id -g)" /work /out
-
-          echo "TARGET_UID=$(id -u)" >> "$GITHUB_ENV"
-          echo "TARGET_GID=$(id -g)" >> "$GITHUB_ENV"
-          echo "WORK_DIR=/work" >> "$GITHUB_ENV"
-          echo "OUT_DIR=/out" >> "$GITHUB_ENV"
-
-      - name: Install dependencies
-        run: |
-          pacman -Syu --noconfirm archiso curl gnupg squashfs-tools
-
-      - name: Make build script executable
-        run: chmod +x archiso/build.sh
-
-      - name: Build ISO
-        working-directory: archiso
+      - name: Build ISO inside Arch Docker
         env:
-          WORK_DIR: ${{ env.WORK_DIR }}
-          OUT_DIR: ${{ env.OUT_DIR }}
-          TARGET_UID: ${{ env.TARGET_UID }}
-          TARGET_GID: ${{ env.TARGET_GID }}
-        run: ./build.sh
+          DOCKER_BIN: "sudo docker"
+        run: |
+          chmod +x ./build_docker.sh
+          ./build_docker.sh
 
       - name: Find generated ISO
         id: find_iso
         run: |
-          # Ajusta el patrón si el nombre del ISO es distinto
-          ISO_PATH=$(ls -1 out/*.iso | head -n 1)
+          ISO_PATH=$(ls -1 out/*.iso | head -n 1 || true)
+
           if [ -z "$ISO_PATH" ]; then
             echo "No se encontró ningún ISO en out/*.iso"
+            ls -R
             exit 1
           fi
+
           echo "ISO_PATH=$ISO_PATH"
           echo "iso_path=$ISO_PATH" >> "$GITHUB_OUTPUT"
 
@@ -65,13 +42,12 @@ jobs:
           UPLOAD_URL: ${{ env.UPLOAD_URL }}
         run: |
           attempts=0
-          max_retries=6  # Máximo de 6 reintentos (7 intentos en total contando el primero)
+          max_retries=6
 
           while true; do
             attempts=$((attempts + 1))
             echo "Intento de subida $attempts..."
 
-            # Ajusta -F "file=@..." si tu PHP espera otro nombre de campo
             if curl --fail --show-error -F "file=@${ISO_PATH}" "${UPLOAD_URL}"; then
               echo "✅ Subida completada correctamente."
               break

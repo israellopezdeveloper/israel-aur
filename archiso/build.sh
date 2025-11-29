@@ -6,8 +6,8 @@ KEY_URL="https://israellopezdeveloper.github.io/israel-aur/israel-repo.asc"
 BASE_DIR="$(dirname "$(realpath ${0})")"
 ARCHISO_PACMAN="$(realpath "${BASE_DIR}/pacman.conf")"
 GPG_DIR="$(realpath "${BASE_DIR}/airootfs/usr/share/pacman/keyrings")"
-WORK_DIR="$(realpath "${BASE_DIR}/../work")"
-OUT_DIR="$(realpath "${BASE_DIR}/../out")"
+WORK_DIR="$(realpath "${BASE_DIR}/work")"
+OUT_DIR="$(realpath "${BASE_DIR}/out")"
 REPO_DIR="$(realpath "${BASE_DIR}/airootfs/opt/localrepo")"
 mkdir -p "${REPO_DIR}"
 REPO_SCRIPT="$(realpath "${REPO_DIR}/../deplist.sh")"
@@ -30,7 +30,7 @@ mkdir -p "${GPG_DIR}"
 mkdir -p "${REPO_DIR}"
 rm -rf "${WORK_DIR:?}"/*
 rm -rf "${OUT_DIR:?}"/*
-sed "s&__WORKING_DIRECTORY__&${BASE_DIR}&" "${ARCHISO_PACMAN}.bak" > "${ARCHISO_PACMAN}"
+sed "s&__WORKING_DIRECTORY__&file://${BASE_DIR}&" "${ARCHISO_PACMAN}.bak" > "${ARCHISO_PACMAN}"
 echo "👌 OK"
 
 echo "."
@@ -141,7 +141,9 @@ echo "."
 echo "."
 echo "Creando ISO"
 echo "===================="
-MKSQUASHFS_OPTIONS="-processors 4" mkarchiso -v -w "${WORK_DIR}" -o "${OUT_DIR}" "${BASE_DIR}"
+MKSQUASHFS_OPTIONS="-processors 4" mkarchiso -v -w "${WORK_DIR}" -o "${OUT_DIR}" "${BASE_DIR}" \
+  && echo "DESCARGADO!!" \
+  || echo "No se ha descargado todo!"
 
 rm -rf "${WORK_DIR:?}"/*
 rm -rf "${ARCHISO_PACMAN}"

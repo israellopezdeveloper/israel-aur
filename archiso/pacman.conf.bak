@@ -35,4 +35,4 @@ LocalFileSigLevel = Optional
 
 [localrepo]
 SigLevel = Optional TrustAll
-Server = file://__WORKING_DIRECTORY__/archiso/airootfs/opt/localrepo
+Server = file://__WORKING_DIRECTORY__/airootfs/opt/localrepo

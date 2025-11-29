@@ -6,8 +6,8 @@ KEY_URL="https://israellopezdeveloper.github.io/israel-aur/israel-repo.asc"
 BASE_DIR="$(dirname "$(realpath ${0})")"
 ARCHISO_PACMAN="$(realpath "${BASE_DIR}/pacman.conf")"
 GPG_DIR="$(realpath "${BASE_DIR}/airootfs/usr/share/pacman/keyrings")"
-WORK_DIR="$(realpath "${BASE_DIR}/work")"
-OUT_DIR="$(realpath "${BASE_DIR}/out")"
+WORK_DIR="$(realpath "${BASE_DIR}/../work")"
+OUT_DIR="$(realpath "${BASE_DIR}/../out")"
 REPO_DIR="$(realpath "${BASE_DIR}/airootfs/opt/localrepo")"
 mkdir -p "${REPO_DIR}"
 REPO_SCRIPT="$(realpath "${REPO_DIR}/../deplist.sh")"
@@ -22,6 +22,7 @@ if [[ "$1" == "--skip-download-packages" || "$1" == "-p" ]]; then
 fi
 
 
+echo "================="
 echo "Verificando paths"
 echo "================="
 mkdir -p "${WORK_DIR}"
@@ -30,11 +31,13 @@ mkdir -p "${GPG_DIR}"
 mkdir -p "${REPO_DIR}"
 rm -rf "${WORK_DIR:?}"/*
 rm -rf "${OUT_DIR:?}"/*
-sed "s&__WORKING_DIRECTORY__&file://${BASE_DIR}&" "${ARCHISO_PACMAN}.bak" > "${ARCHISO_PACMAN}"
+sed "s&__WORKING_DIRECTORY__&${BASE_DIR}&" "${ARCHISO_PACMAN}.bak" > "${ARCHISO_PACMAN}"
 echo "👌 OK"
 
 echo "."
 echo "."
+echo "."
+echo "======================="
 echo "Preparando pacman local"
 echo "======================="
 echo "  - Instalando dependencias en el sistema base"
@@ -52,7 +55,10 @@ echo "${FPR}:4:" > "${GPG_DIR}/israel-repo-trusted"
 
 restore_pacman_conf() {
   if [[ -n "${PACMAN_BACKUP}" && -f "${PACMAN_BACKUP}" ]]; then
-    echo
+    echo "."
+    echo "."
+    echo "."
+    echo "====================================="
     echo "Restaurando /etc/pacman.conf original"
     echo "====================================="
     cp "${PACMAN_BACKUP}" "${SYSTEM_PACMAN_CONF}"
@@ -132,6 +138,9 @@ echo "👌 OK"
 
 if [ "${SKIP_DOWNLOAD}" = false ]; then
   echo "."
+  echo "."
+  echo "."
+  echo "===================="
   echo "Descargando paquetes"
   echo "===================="
   "${REPO_SCRIPT}" "${PACKAGES_LIST}" "${REPO_DIR}"
@@ -139,11 +148,13 @@ fi
 
 echo "."
 echo "."
+echo "."
+echo "===================="
 echo "Creando ISO"
 echo "===================="
 MKSQUASHFS_OPTIONS="-processors 4" mkarchiso -v -w "${WORK_DIR}" -o "${OUT_DIR}" "${BASE_DIR}" \
-  && echo "DESCARGADO!!" \
-  || echo "No se ha descargado todo!"
+  && echo "  - ISO creada!!" \
+  || echo "ERROR: No se ha podido crear la ISO"
 
 rm -rf "${WORK_DIR:?}"/*
 rm -rf "${ARCHISO_PACMAN}"

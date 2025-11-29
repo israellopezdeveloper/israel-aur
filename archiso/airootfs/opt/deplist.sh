@@ -50,7 +50,11 @@ get_deps() {
     '
 }
 
+echo "  - Listando paquetes"
+DOWNLOADED_PACKAGES=$(ls -l /archiso/airootfs/opt/localrepo/ | wc -l)
 while ((${#QUEUE[@]} > 0)); do
+    echo -en "\r                           \r"
+    echo -n "SEEN: ${#SEEN[@]}/${DOWNLOADED_PACKAGES}"
     pkg="${QUEUE[0]}"
     QUEUE=("${QUEUE[@]:1}")  # pop
 
@@ -85,6 +89,8 @@ done
 
 mkdir -p "${DEST}"
 
+echo
+echo "  - Descargando paquetes"
 MAX_PACMAN_RETRIES=6
 PACMAN_RETRIES_COUNT=0
 while [ $PACMAN_RETRIES_COUNT -lt $MAX_PACMAN_RETRIES ]; do
@@ -102,23 +108,29 @@ while [ $PACMAN_RETRIES_COUNT -lt $MAX_PACMAN_RETRIES ]; do
             if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
                 sleep $SLEEP_TIME
             else
+                echo "ERROR: No se pudo conectar con ${URL}"
                 exit 1
             fi
         fi
     done
 
-    if pacman -Syyww --noconfirm --overwrite --needed --asdeps --cachedir "${DEST}" $(cat "${PKGFILE}"); then
-        break
-    else
-        if [ $PACMAN_RETRIES_COUNT -lt $MAX_PACMAN_RETRIES ]; then
-            sleep $SLEEP_TIME
-        else
-            exit 1
-        fi
-    fi
+    pacman -Syyww --noconfirm --overwrite --needed --asdeps \
+        --cachedir "${DEST}" \
+        $(cat "${PKGFILE}") > /dev/null 2>&1 \
+        && { break; } \
+        || { \
+          if [ $PACMAN_RETRIES_COUNT -lt $MAX_PACMAN_RETRIES ]; then \
+              sleep $SLEEP_TIME; \
+          else \
+              echo "ERROR: No se pudo descargar los paquetes"; \
+              exit 1; \
+          fi; \
+        }
 done
 cd "${DEST}"
 rm localrepo.* || true
+echo "  - Creando base de datos del repo"
 repo-add localrepo.db.tar.gz ./*.pkg.tar.zst > /dev/null 2>&1
+echo "👌 OK"
 
 

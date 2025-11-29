@@ -19,8 +19,8 @@ jobs:
         env:
           DOCKER_BIN: "sudo docker"
         run: |
-          chmod +x ./build_docker.sh
-          ./build_docker.sh
+          chmod +x ./create-archiso.sh
+          ./create-archiso.sh
 
       - name: Find generated ISO
         id: find_iso

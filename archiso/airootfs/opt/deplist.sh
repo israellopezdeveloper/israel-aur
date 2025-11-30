@@ -89,6 +89,7 @@ done
 
 mkdir -p "${DEST}"
 
+echo 
 echo "  - Descargando paquetes"
 MAX_PACMAN_RETRIES=6
 PACMAN_RETRIES_COUNT=0
@@ -115,16 +116,18 @@ while [ $PACMAN_RETRIES_COUNT -lt $MAX_PACMAN_RETRIES ]; do
 
     pacman -Syyww --noconfirm --overwrite --needed --asdeps \
         --cachedir "${DEST}" \
-        $(cat "${PKGFILE}") > /dev/null 2>&1 \
+        $(cat "${PKGFILE}") > /dev/null 2>log.log \
         && { break; } \
         || { \
           if [ $PACMAN_RETRIES_COUNT -lt $MAX_PACMAN_RETRIES ]; then \
               sleep $SLEEP_TIME; \
           else \
               echo "ERROR: No se pudo descargar los paquetes"; \
+              cat log.log
               exit 1; \
           fi; \
         }
+    rm log.log >/dev/null 2>&1
 done
 cd "${DEST}"
 rm localrepo.* || true

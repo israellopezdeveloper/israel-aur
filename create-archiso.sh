@@ -11,7 +11,7 @@ mkdir -p "${BASE_DIR}/out" "${BASE_DIR}/work"
 ARCH_IMAGE="archlinux:latest"
 
 # Usa sudo si hace falta (en GitHub Actions seguro que sí)
-DOCKER_BIN="${DOCKER_BIN:-sudo podman}"
+DOCKER_BIN="${DOCKER_BIN:-sudo docker}"
 
 ${DOCKER_BIN} run --rm \
   --privileged \

@@ -51,10 +51,10 @@ get_deps() {
 }
 
 echo "  - Listando paquetes"
-# DOWNLOADED_PACKAGES=$(ls -l /archiso/airootfs/opt/localrepo/ | wc -l)
+DOWNLOADED_PACKAGES=$(ls -l /archiso/airootfs/opt/localrepo/ | wc -l)
 while ((${#QUEUE[@]} > 0)); do
-    # echo -en "\r                           \r"
-    # echo -n "SEEN: ${#SEEN[@]}/${DOWNLOADED_PACKAGES}"
+    echo -en "\r                           \r"
+    echo -n "SEEN: ${#SEEN[@]}/${DOWNLOADED_PACKAGES}"
     pkg="${QUEUE[0]}"
     QUEUE=("${QUEUE[@]:1}")  # pop
 

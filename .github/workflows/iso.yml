@@ -2,7 +2,6 @@ name: Build ArchISO and Upload
 
 on:
   workflow_dispatch:
-  push:
 
 jobs:
   build-and-upload:
@@ -15,31 +14,8 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Build ISO inside Arch Docker
+      - name: Generate ISO
         env:
-          DOCKER_BIN: "sudo docker"
-        run: |
-          mkdir -p work
-          mkdir -p out
-          ./create-archiso.sh
-
-      - name: Find generated ISO
-        id: find_iso
-        run: |
-          ISO_PATH=$(ls -1 out/*.iso | head -n 1 || true)
-
-          if [ -z "$ISO_PATH" ]; then
-            echo "No se encontró ningún ISO en out/*.iso"
-            ls -R
-            exit 1
-          fi
-
-          echo "ISO_PATH=$ISO_PATH"
-          echo "iso_path=$ISO_PATH" >> "$GITHUB_OUTPUT"
-
-      - name: Upload ISO with retries
-        env:
-          ISO_PATH: ${{ steps.find_iso.outputs.iso_path }}
           UPLOAD_URL: ${{ env.UPLOAD_URL }}
         run: |
           attempts=0

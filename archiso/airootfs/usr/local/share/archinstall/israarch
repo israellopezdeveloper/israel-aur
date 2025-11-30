@@ -1,0 +1,89 @@
+#!/usr/bin/env bash
+
+cleanup_on_exit() {
+    echo -e "\n🚨 ¡Script interrumpido! Ejecutando función de limpieza..."
+    umount -R /mnt
+    exit 130
+}
+
+# --- 2. Establecer la Trampa (Trap) ---
+
+# SIGINT (2): Enviada por Ctrl+C.
+# SIGTERM (15): Enviada por el comando 'kill' por defecto, o al cerrar un entorno.
+# SIGHUP (1): Enviada cuando el terminal se desconecta.
+# EXIT (0): Siempre se ejecuta al salir, sea exitoso o no, pero no garantiza la ejecución en un 'kill -9'.
+
+trap cleanup_on_exit SIGINT SIGTERM SIGHUP
+
+if lsblk | grep -q 'vda'; then
+  mkfs.fat -F32 /dev/vda1
+  mkfs.ext4 /dev/vda2
+
+  mount /dev/vda2 /mnt
+  mkdir -p /mnt/boot
+  mount /dev/vda1 /mnt/boot
+elif lsblk | grep -q 'nvme0n1' && lsblk | grep -q 'nvme0n1p1' && lsblk | grep -q 'nvme0n1p2' && lsblk | grep -q 'nvme0n1p3'; then
+  mkfs.fat -F32 /dev/nvme0n1p1
+  mkfs.ext4 /dev/nvme0n1p2
+  mount /dev/nvme0n1p2 /mnt
+  mkdir -p /mnt/boot
+  mount /dev/nvme0n1p1 /mnt/boot
+  mkdir -p /mnt/home
+  mount /dev/nvme0n1p3 /mnt/home
+fi
+
+archinstall --offline --skip-ntp --skip-wkd \
+  --config /usr/local/share/archinstall/user_configuration.json \
+  --creds  /usr/local/share/archinstall/user_credentials.json
+
+echo "===== Configurando repositorio israel-repo en el sistema instalado ====="
+
+# Copiar pacman.conf del live al sistema final (opcional)
+# cp /etc/pacman.conf /mnt/etc/pacman.conf
+
+# Añadir repositorio al pacman.conf del sistema final
+echo "
+[israrepo]
+SigLevel = Required
+Server = https://israellopezdeveloper.github.io/israel-aur/\$arch
+
+[israbigrepo]
+SigLevel = Required
+Server = https://kogaslife.duckdns.org/israrepo/\$arch
+" >> /mnt/etc/pacman.conf
+
+# Copiar la key al sistema final
+mkdir -p /mnt/usr/share/pacman/keyrings/
+cp /usr/share/pacman/keyrings/israel-repo.asc /mnt/usr/share/pacman/keyrings/israel-repo.asc
+
+# Inicializar keyring del sistema final
+arch-chroot /mnt bash -c '
+  pacman-key --init
+  pacman-key --populate archlinux
+
+  pacman-key --add /usr/share/pacman/keyrings/israel-repo.asc
+
+  FPR=$(gpg --with-colons /usr/share/pacman/keyrings/israel-repo.asc \
+        | awk -F: "/^fpr:/ {print \$10; exit}")
+
+  pacman-key --lsign-key "$FPR"
+
+  pacman -Sy
+  systemctl enable libvirtd.service
+  systemctl enable sddm.service
+
+  mkdir -p /etc/libvirt/qemu/networks/autostart
+  if [ -f /usr/share/libvirt/networks/default.xml ]; then
+      cp /usr/share/libvirt/networks/default.xml /etc/libvirt/qemu/networks/default.xml
+      ln -sf ../default.xml /etc/libvirt/qemu/networks/autostart/default.xml
+  fi
+  npm install -g solhint css-languge-server
+'
+
+echo "===== Repositorio israel-repo configurado correctamente ====="
+
+umount -R /mnt
+
+# TODO:
+# - crear virbr0 (sudo virsh -c qemu:///system net-start default; sudo virsh -c qemu:///system net-autostart default)
+# - intalar con npm: solhint, css-languge-server

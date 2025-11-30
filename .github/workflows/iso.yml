@@ -2,6 +2,8 @@ name: Build ArchISO and Upload
 
 on:
   workflow_dispatch:
+  schedule:
+    - cron: '0 2 1 * *'
 
 jobs:
   build-and-upload:

@@ -116,7 +116,7 @@ while [ $PACMAN_RETRIES_COUNT -lt $MAX_PACMAN_RETRIES ]; do
 
     pacman -Syyww --noconfirm --overwrite --needed --asdeps \
         --cachedir "${DEST}" \
-        $(cat "${PKGFILE}") > /dev/null 2>log.log \
+        $(cat "${PKGFILE}") > log.log 2>&1 \
         && { break; } \
         || { \
           if [ $PACMAN_RETRIES_COUNT -lt $MAX_PACMAN_RETRIES ]; then \

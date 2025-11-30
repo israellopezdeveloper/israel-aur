@@ -1,0 +1,17 @@
+{
+  "technologies": ["bash", "docker"],
+  "lang": {
+    "en": {
+      "name": "Arch Koala Project",
+      "desc": "A personal Arch Linux ecosystem with custom repositories for AUR and personal tools, plus an automated ISO built from my workstation configuration."
+    },
+    "es": {
+      "name": "Arch Koala Project",
+      "desc": "Un ecosistema personal de Arch Linux con repositorios personalizados para paquetes AUR y herramientas propias, junto con una ISO automatizada basada en la configuración actual de mi PC."
+    },
+    "zh": {
+      "name": "Arch Koala Project",
+      "desc": "一个个人 Arch Linux 生态系统，包含 AUR 和个人工具的自定义存储库，以及根据我的工作站配置自动构建的 ISO。"
+    }
+  }
+}

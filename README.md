@@ -99,9 +99,3 @@ Esta ISO me permite reinstalar o desplegar una máquina con mi entorno completo 
 - Entorno de desarrollo consistente
 - Distribución sencilla de mis herramientas y scripts
 - Builds reproducibles y automatizados
-
-### 📜 Licencia
-
-Úsalo como referencia, modifícalo, adáptalo — si te sirve, ya cumple su objetivo.
-
-Si quieres, te preparo versiones separadas (solo inglés, solo español), te creo badgets, una estructura de carpetas o un README más técnico con ejemplos de configuración de repos y comandos `pacman`. ¿Quieres extenderlo?

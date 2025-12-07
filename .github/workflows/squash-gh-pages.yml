@@ -1,0 +1,45 @@
+name: Squash gh-pages history
+
+on:
+  schedule:
+    - cron: "0 8 7 * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  squash_gh_pages:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout gh-pages
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: gh-pages
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Squash all history into a single commit
+        run: |
+          # Creamos una rama huérfana con el contenido actual
+          git checkout --orphan gh-pages-clean
+
+          # Añadimos todos los archivos del estado actual
+          git add .
+
+          # Commit único (puedes cambiar el mensaje)
+          git commit -m "chore: monthly squash gh-pages ($(date -u +'%Y-%m-%d'))"
+
+          # Borramos la rama antigua y renombramos
+          git branch -D gh-pages
+          git branch -m gh-pages
+
+      - name: Force-push squashed branch
+        run: |
+          git push origin gh-pages --force
+

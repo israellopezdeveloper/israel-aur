@@ -1,0 +1,125 @@
+/* ============================
+   ESTILO GENERAL TIPO TTY RETRO
+   ============================ */
+
+body {
+  background-color: #001a00; /* Negro verdoso */
+  color: #33ff99; /* Verde fósforo */
+  font-family: "IBM Plex Mono", "Consolas", "Monaco", monospace;
+  padding: 20px;
+  margin: 0;
+
+  /* Efecto suave de scanlines (opcional) */
+  background-image: linear-gradient(
+    rgba(0, 0, 0, 0.25) 50%,
+    rgba(0, 0, 0, 0.3) 50%
+  );
+  background-size: 100% 3px;
+}
+
+/* Título estilo terminal */
+h1,
+h2 {
+  color: #00ff66;
+  font-weight: normal;
+  margin-bottom: 10px;
+  padding-bottom: 5px;
+  border-bottom: 1px solid #00aa55;
+  text-shadow: 0 0 5px #00ff66; /* brillo fósforo */
+}
+
+/* ============================
+   TABLA TIPO "LISTADO TTY"
+   ============================ */
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: #001100; /* Panel verde oscuro */
+  border: 1px solid #00aa55; /* Borde estilo terminal */
+}
+
+/* Encabezado */
+thead {
+  background-color: #003300; /* Verde más claro */
+  border-bottom: 1px solid #00aa55;
+}
+
+th {
+  padding: 8px 10px;
+  color: #00ff99;
+  font-weight: bold;
+  border-right: 1px solid #007744;
+  text-shadow: 0 0 2px #00ff55;
+}
+
+th:last-child {
+  border-right: none;
+}
+
+/* ============================
+   FILAS
+   ============================ */
+
+tbody tr {
+  border-bottom: 1px solid #003300;
+  transition: 0.15s background-color ease;
+}
+
+/* Hover estilo terminal: invertir colores */
+tbody tr:hover {
+  background-color: #00ff99; /* Inversión */
+  color: #001a00;
+}
+
+/* Celdas */
+td {
+  padding: 8px 12px;
+}
+
+/* Primera columna estilo "directorio/enlace" */
+td:first-child {
+  font-weight: bold;
+  color: #00ff66;
+}
+
+.retrocursor::after {
+  content: "█"; /* Bloque de cursor clásico */
+  display: inline-block;
+  margin-left: 2px;
+  color: #00ff66; /* Verde fósforo */
+  text-shadow: 0 0 6px #00ff66;
+  animation: blink-cursor 0.8s steps(1) infinite;
+}
+
+/* Parpadeo on/off */
+@keyframes blink-cursor {
+  0%,
+  50% {
+    opacity: 1;
+  }
+  50.01%,
+  100% {
+    opacity: 0;
+  }
+}
+
+pre {
+  /* Fondo */
+  background-color: #1e1e1e; /* Un gris muy oscuro, casi negro (típico de IDEs) */
+  /* Color del texto */
+  color: #d4d4d4; /* Gris claro o blanco para contraste */
+
+  /* Mejoras de estilo opcionales */
+  padding: 15px; /* Espacio interno alrededor del código */
+  border-radius: 5px; /* Bordes ligeramente redondeados */
+  overflow-x: auto; /* Permite desplazamiento horizontal si el código es muy largo */
+  font-family: "Consolas", "Monaco", monospace; /* Fuente monoespaciada */
+  white-space: pre-wrap; /* Respeta los saltos de línea y envuelve el texto si es necesario */
+}
+
+/* Opcional: Si tienes etiquetas <code> dentro de <pre> */
+pre code {
+  background-color: transparent; /* Asegura que el <code> no anule el fondo negro del <pre> */
+  color: inherit; /* Hereda el color del texto del <pre> */
+}

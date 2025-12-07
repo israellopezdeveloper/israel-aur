@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Israel's Repo (/iso)</title>
+    <link href="../style.css" rel="stylesheet" />
+  </head>
+  <body>
+    <h1 class="retrocursor">Israel's Repo (/iso)</h1>
+
+    <table>
+      <thead>
+        <tr>
+          <th>File</th>
+          <th>Size</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><a href="..">..</a></td>
+          <td></td>
+        </tr>
+        <tr>
+          <td>
+            <a href="https://kogaslife.duckdns.org/israrepo/iso/archlinux.iso"
+              >archlinux.iso</a
+            >
+          </td>
+          <td>9.7Gb</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <section>
+      <h2>📝 Cómo Grabar la ISO en un Pendrive USB</h2>
+      <p>
+        Sigue estas instrucciones para crear un USB de arranque (bootable) con
+        el archivo <code>archiso.iso</code>.
+      </p>
+
+      <h3>Para Linux / macOS (Método dd) 🐧🍎</h3>
+      <p>
+        Utiliza la utilidad de línea de comandos <code>dd</code> para una
+        transferencia directa y eficiente.
+        <b>¡Ten mucho cuidado con el disco de destino!</b>
+      </p>
+      <p>
+        Ejecuta el siguiente comando, sustituyendo <code>/dev/sdX</code> por la
+        ruta de tu dispositivo USB completo, no la partición.
+      </p>
+
+      <p>Comando <code>dd</code>:</p>
+      <pre><code>sudo dd if=archiso.iso of=/dev/sdX status=progress bs=4M</code></pre>
+
+      <ul>
+        <li>
+          <code>if=archiso.iso</code>: Es la ruta de tu archivo de entrada
+          (Input File).
+        </li>
+        <li>
+          <code>of=/dev/sdX</code>: Es la ruta de tu dispositivo de salida
+          (Output File).
+        </li>
+        <li>
+          <code>status=progress</code>: Muestra el progreso de la escritura (no
+          disponible en todas las versiones de <code>dd</code>).
+        </li>
+        <li>
+          <code>bs=4M</code>: Bloques de 4 Megabytes para una escritura más
+          rápida.
+        </li>
+      </ul>
+      <p class="warning">
+        ⚠️ <b>PELIGRO:</b> Un error en la ruta <code>of=</code> puede
+        <b>borrar permanentemente</b> los datos de tu disco duro principal.
+      </p>
+      <h3>Para Windows 💻</h3>
+      <p>
+        Se recomienda usar una herramienta gráfica como <b>Rufus</b> o
+        <b>Balena Etcher</b>.
+      </p>
+      <ol>
+        <li>
+          <strong>Descargar la herramienta:</strong> Descarga e instala
+          <a href="https://rufus.ie/" target="_blank">Rufus</a> o
+          <a href="https://www.balena.io/etcher/" target="_blank"
+            >Balena Etcher</a
+          >.
+        </li>
+        <li>
+          <strong>Seleccionar la ISO:</strong> Abre la aplicación y selecciona
+          el archivo <code>archiso.iso</code> que has descargado.
+        </li>
+        <li>
+          <strong>Seleccionar el USB:</strong> Elige el pendrive USB de destino
+          (¡asegúrate de que esté vacío o de que no contenga datos importantes,
+          ya que se borrará!).
+        </li>
+        <li>
+          <strong>Grabar:</strong> Haz clic en el botón de "Empezar" o "Flash"
+          para iniciar el proceso de escritura.
+        </li>
+        <li>
+          <strong>Finalizar:</strong> Espera a que la barra de progreso llegue
+          al 100% y la aplicación confirme que la unidad es "Bootable".
+        </li>
+      </ol>
+    </section>
+
+    <section>
+      <h2>💻 Guía de Instalación: Arch Linux Customizada</h2>
+      <p>
+        Este instalador utiliza un script automatizado para configurar un
+        sistema base de Arch Linux con tus repositorios y configuraciones
+        esenciales.
+      </p>
+
+      <h3>1. Ejecución del Script de Instalación</h3>
+      <p>
+        Tu sistema se instala mediante el script automatizado. El script detecta
+        el diseño de partición basado en el nombre de tu disco.
+      </p>
+
+      <h4>Detección de Discos</h4>
+      <p>
+        El script busca dos escenarios principales para formatear y montar las
+        particiones:
+      </p>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Disco Detectado</th>
+            <th>Particiones Requeridas</th>
+            <th>Montajes (<code>/mnt</code>)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>vda</strong> (Común en VMs)</td>
+            <td>
+              <code>/dev/vda1</code> (FAT32) y <code>/dev/vda2</code> (ext4)
+            </td>
+            <td><code>/mnt/boot</code> y <code>/mnt</code></td>
+          </tr>
+          <tr>
+            <td><strong>nvme0n1</strong> (SSD NVMe)</td>
+            <td>
+              <code>/dev/nvme0n1p1</code>, <code>/dev/nvme0n1p2</code>,
+              <code>/dev/nvme0n1p3</code>
+            </td>
+            <td>
+              <code>/mnt/boot</code>, <code>/mnt</code>, y
+              <code>/mnt/home</code>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p class="warning">
+        <strong>Nota:</strong> Debes haber creado previamente estas particiones
+        usando <code>fdisk</code>, <code>gdisk</code> o
+        <code>cfdisk</code> antes de ejecutar el script.
+      </p>
+
+      <h4>Iniciar la Instalación</h4>
+      <ol>
+        <li>
+          Al iniciar el sistema desde el USB, introducir el siguiente comando:
+        </li>
+      </ol>
+
+      <pre>israarch</pre>
+
+      <p>
+        Una vez que el script finaliza, desmonta todas las particiones con
+        <code>umount -R /mnt</code>.
+      </p>
+      <p>
+        Ahora puedes <strong>reiniciar</strong> el sistema, retirar el medio de
+        instalación e iniciar sesión en tu nueva instalación personalizada de
+        Arch Linux:
+      </p>
+
+      <pre><code>reboot</code></pre>
+    </section>
+  </body>
+</html>

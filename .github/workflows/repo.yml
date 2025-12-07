@@ -1,0 +1,271 @@
+name: Build & Sign Arch Repo
+
+on:
+  push:
+    branches: [ "main" ]
+  schedule:
+    - cron: '0 */12 * * *'
+
+jobs:
+  regenerating-repo:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    container:
+      image: archlinux:latest
+    steps:
+      - name: Install packages
+        run: pacman -Syu --noconfirm git openssh sudo debugedit base-devel curl jq
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Import GPG key
+        uses: crazy-max/ghaction-import-gpg@v6
+        with:
+          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.GPG_PASSPHRASE }}
+
+      - name: Create non-root user
+        run: |
+          useradd -m builder
+          passwd -d builder
+          echo "builder ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+          chown -R builder:builder .
+
+      - name: Sign any unsigned packages
+        env:
+          GPG_KEYID: ${{ secrets.GPG_KEYID }}
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+        run: |
+          any=0
+          CURR_DIR="$(pwd)"
+          AUR_PACKAGES=$(cat aur_packages.txt)
+          cd /tmp
+          touch log.log
+          chmod 666 log.log
+          WIDTH_MAX=100
+          for pkg in ${AUR_PACKAGES[@]}; do
+            VAR_LENGTH=${#pkg}
+            eval "printf \"=%.0s\" {1..$(((WIDTH_MAX - VAR_LENGTH)/2))}"
+            printf " %s " "${pkg}"
+            eval "printf \"=%.0s\" {1..$(((WIDTH_MAX - VAR_LENGTH)/2))}"
+            echo
+            sudo -u builder bash -c " \
+              git clone \"https://aur.archlinux.org/${pkg}.git\" \
+              >/dev/null 2>log.log \
+                && echo '  ==> Cloned OK' \
+                || { \
+                  echo ' ==> Cloning KO'; \
+                  cat log.log; \
+                  false; \
+                }; \
+              cd \"${pkg}\"; \
+              makepkg -sf --noconfirm --skippgpcheck \
+              >/dev/null 2>log.log \
+                && echo '  ==> Created OK' \
+                || { \
+                  echo '  ==> Creating KO'; \
+                  cat log.log; \
+                  false; \
+                }; \
+              mv *.tar.zst ..;"
+            rm *-debug* >/dev/null 2>&1 || true
+            pacman -U --noconfirm ./*.tar.zst >/dev/null 2>log.log \
+              && echo '  ==> Installed OK!!!!!' \
+              || {
+                echo '  ==> Installing KO';
+                cat log.log;
+                false;
+              }
+            mv *.tar.zst "${CURR_DIR}/x86_64"
+            rm -rf "${pkg}" >/dev/null 2>&1 || true
+            eval "printf \"=%.0s\" {1..$(((WIDTH_MAX - VAR_LENGTH)/2))}"
+            printf " %s " "${pkg}"
+            eval "printf \"=%.0s\" {1..$(((WIDTH_MAX - VAR_LENGTH)/2))}"
+            echo
+            echo -e ".\n.\n.\n"
+          done
+          cd "${CURR_DIR}"
+          rm *.sig || true
+          rm *.db* || true
+          rm *.files* || true
+          for pkg in x86_64/*.pkg.tar.*; do
+            [ -e "$pkg" ] || continue
+            if [[ "${pkg}" == *sig ]]; then
+              continue
+            fi
+            gpg --batch --yes --pinentry-mode loopback \
+              --local-user "${GPG_KEYID}" \
+              --passphrase "${GPG_PASSPHRASE}" \
+              --detach-sign "$pkg" >/dev/null 2>&1
+          done
+          rm log.log || true
+          ls -l x86_64
+
+      - name: Upload repo files
+        env:
+          UPLOAD_URL: https://kogaslife.duckdns.org/israrepo/upload.php
+        run: |
+          set -e
+          echo "Subiendo ficheros de x86_64/ a ${UPLOAD_URL}"
+          THRESHOLD=$((100*1024*1024))
+          for f in x86_64/*; do
+            [ -f "$f" ] || continue
+            if [ "$(stat -c "%s" "${f}")" -lt "${THRESHOLD}" ]; then
+              continue
+            fi
+            max_retries=6
+            retry=1
+            success=0
+            while [ $retry -le $max_retries ]; do
+              echo "==> Uploading $f (attempt $retry/$max_retries)"
+              if curl -sS -X POST -F "fileToUpload=@${f}" "$UPLOAD_URL"; then
+                echo "✅ Upload succeeded for $f"
+                success=1
+                break
+              else
+                echo "❌ Upload failed for $f"
+              fi
+              retry=$((retry + 1))
+              sleep 2
+            done
+            if [ $success -ne 1 ]; then
+              echo "🚨 Upload failed after $max_retries attempts for $f"
+            fi
+            rm -rf "${f}"
+
+            f="${f}.sig"
+            [ -f "$f" ] || continue
+            max_retries=6
+            retry=1
+            success=0
+            while [ $retry -le $max_retries ]; do
+              echo "==> Uploading $f (attempt $retry/$max_retries)"
+              if curl -sS -X POST -F "fileToUpload=@${f}" "$UPLOAD_URL"; then
+                echo "✅ Upload succeeded for $f"
+                success=1
+                break
+              else
+                echo "❌ Upload failed for $f"
+              fi
+              retry=$((retry + 1))
+              sleep 2
+            done
+            if [ $success -ne 1 ]; then
+              echo "🚨 Upload failed after $max_retries attempts for $f"
+            fi
+            rm -rf "${f}"
+          done
+      - name: Rebuild signed repo database
+        env:
+          REPO_NAME: israrepo
+          GPG_KEYID: ${{ secrets.GPG_KEYID }}
+        run: |
+          count=$(ls -1 x86_64/*.pkg.tar.zst 2>/dev/null | wc -l || true)
+          if [ "$count" -eq 0 ]; then
+            echo "No hay paquetes; se omite reconstrucción de la DB."
+            exit 0
+          fi
+          repo-add -s -k "${GPG_KEYID}" -R \
+            "x86_64/${REPO_NAME}.db.tar.gz" \
+            x86_64/*.pkg.tar.zst >/dev/null 2>log.log \
+            && echo " ==> DONE!!" \
+            || {
+               echo " ==> FAILED";
+               cat log.log;
+               false;
+            }
+          rm log.log
+          rm -rf x86_64/${REPO_NAME}.db x86_64/${REPO_NAME}.files || true
+          cp "x86_64/${REPO_NAME}.db.tar.gz"    "x86_64/${REPO_NAME}.db"
+          cp "x86_64/${REPO_NAME}.files.tar.gz" "x86_64/${REPO_NAME}.files"
+          FILES=""
+          THRESHOLD=$((100*1024*1024))
+          for i in x86_64/*; do
+            if [ "$i" = "index.html" ]; then
+              continue
+            fi
+            FILE_NAME="$(basename "${i}")"
+            FILE_SIZE="$(stat -c "%s" "${i}" | numfmt --to=iec)"
+            FILES="${FILES}<tr><td><a href=\"https://israellopezdeveloper.github.io/israel-aur/$i\">${FILE_NAME}</a></td><td>${FILE_SIZE}</td></tr>"
+          done
+          cat > x86_64/index.html <<'HTML'
+          <!DOCTYPE html>
+          <html lang="es">
+            <head>
+              <meta charset="utf-8">
+              <title>Israel's Repo (/x86_64)</title>
+              <link href="../style.css" rel="stylesheet" />
+            </head>
+            <body>
+              <h1 class="retrocursor">Israel's Repo (/x86_64)</h1>
+              <table>
+                <thead>
+                  <tr>
+                    <th>File</th>
+                    <th>Size</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><a href="..">..</a></td>
+                    <td></td>
+                  </tr>
+          HTML
+          echo "${FILES}" >> x86_64/index.html
+          cat >> x86_64/index.html <<'HTML'
+                </tbody>
+              </table>
+            </body>
+          </html>
+          HTML
+
+      - name: Set SSH
+        env:
+          REPO_NAME: israrepo
+          DEPLOY_KEY_PRIV: ${{ secrets.DEPLOY_KEY_PRIV }}
+          DEPLOY_KEY_PUB: ${{ secrets.DEPLOY_KEY_PUB }}
+        run: |
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          echo "${DEPLOY_KEY_PRIV}" > ~/.ssh/id_ed25519
+          echo "${DEPLOY_KEY_PUB}" > ~/.ssh/id_ed25519.pub
+          chmod 600 ~/.ssh/id_ed25519 || true
+          chmod 644 ~/.ssh/id_ed25519.pub || true
+          ssh-keyscan -t rsa,ecdsa,ed25519 github.com >> ~/.ssh/known_hosts
+
+      - name: Commit & push if changed
+        env:
+          GITHUB_WORKSPACE: ${{ github.workspace }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          git config --global --add safe.directory "${GITHUB_WORKSPACE}"
+          echo "Workspace: ${GITHUB_WORKSPACE}"
+          ls -lisah "${GITHUB_WORKSPACE}/x86_64"
+          cd "${GITHUB_WORKSPACE}"
+          git config --global user.name  "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git fetch origin gh-pages
+          # Preparamos un worktree limpio para gh-pages
+          rm -rf /tmp/gh-pages
+          git worktree add /tmp/gh-pages gh-pages
+          cd /tmp/gh-pages
+          # Copiamos el contenido generado
+          mkdir -p x86_64
+          cp -r "${GITHUB_WORKSPACE}/x86_64/"* x86_64/
+          echo "Contenido final a publicar:"
+          ls -lisah
+          git add .
+          # Si no hay cambios, no hacemos commit ni push
+          if git diff --cached --quiet; then
+            echo "No hay cambios en gh-pages; nada que commitear."
+            exit 0
+          fi
+          git commit -m "Update signed repo database"
+          git push origin gh-pages
+          # Limpieza opcional del worktree
+          cd "${GITHUB_WORKSPACE}"
+          git worktree remove /tmp/gh-pages --force || true

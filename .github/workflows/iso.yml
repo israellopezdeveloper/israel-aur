@@ -1,0 +1,40 @@
+name: Build ArchISO and Upload
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 2 1 * *'
+
+jobs:
+  build-and-upload:
+    runs-on: ubuntu-latest
+
+    env:
+      UPLOAD_URL: https://kogaslife.duckdns.org/israrepo/uploadiso.php
+
+    steps:
+      - name: Generate ISO
+        env:
+          UPLOAD_URL: ${{ env.UPLOAD_URL }}
+        run: |
+          attempts=0
+          max_retries=6
+
+          while true; do
+            attempts=$((attempts + 1))
+            echo "Intento de subida $attempts..."
+
+            if curl --silent -X GET "${UPLOAD_URL}"; then
+              echo "✅ Subida completada correctamente."
+              break
+            fi
+
+            if [ "$attempts" -gt "$max_retries" ]; then
+              echo "❌ Fallo al subir tras $max_retries reintentos."
+              exit 1
+            fi
+
+            echo "⚠️ Fallo en la subida, reintentando en 15 segundos..."
+            sleep 15
+          done
+

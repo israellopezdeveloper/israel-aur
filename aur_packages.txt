@@ -27,6 +27,7 @@ yay
 zsh-theme-powerlevel10k-git
 catppuccin-gtk-theme-mocha
 claude-code
+php83-imap
 php83
 php83-apache
 php83-apcu
@@ -49,3 +50,4 @@ php83-xml
 php83-xmlreader
 php83-xmlwriter
 php83-zip
+infer-bin

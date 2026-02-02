@@ -5,8 +5,7 @@ set -euo pipefail
   cd /tmp
   sudo sed -i "s/-j[0-9]*/-j$(nproc)/" /etc/makepkg.conf
   sudo sed -i "s/--threads=[0-9]*/--threads=$(nproc)/" /etc/makepkg.conf
-  # Desactivar generación de paquetes debug para ir más rápido
-  sudo sed -i "s/!debug/debug/" /etc/makepkg.conf # Esto suele estar invertido, asegúrate que quede !debug
+  sudo sed -i "s/!debug/debug/" /etc/makepkg.conf
   git clone https://aur.archlinux.org/yay.git &>/dev/null
   cd yay
   makepkg -si --noconfirm &>/dev/null
@@ -27,7 +26,7 @@ echo "Paquetes a construir: ${#PKGS[@]}"
 start_epoch="$(date +%s)"
 
 # Construye/instala todo en un solo comando
-yay -S --needed --noconfirm --cleanafter=false "${PKGS[@]}"
+yay -S --needed --noconfirm --cleanafter=false "${PKGS[@]}" &>/dev/null
 
 # CacheDir real de pacman
 PACMAN_CACHEDIR="$(pacman-conf CacheDir | head -n1 || true)"
@@ -36,7 +35,7 @@ PACMAN_CACHEDIR="$(pacman-conf CacheDir | head -n1 || true)"
 echo "Copiando paquetes desde cache pacman: $PACMAN_CACHEDIR"
 
 # Copiar paquetes generados/descargados en esta ejecución
-find "$PACMAN_CACHEDIR" -maxdepth 1 -type f \
+find "$PACMAN_CACHEDIR" -type f \
   \( -name "*.pkg.tar.zst" -o -name "*.pkg.tar.xz" \) \
   -newermt "@$start_epoch" -exec cp -t "$DEST_DIR" {} +
 

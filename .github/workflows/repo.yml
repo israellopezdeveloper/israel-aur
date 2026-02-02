@@ -65,7 +65,7 @@ jobs:
                 }; \
               cd \"${pkg}\"; \
               makepkg -sf --noconfirm --skippgpcheck \
-              >/dev/null 2>log.log \
+               \
                 && echo '  ==> Created OK' \
                 || { \
                   echo '  ==> Creating KO'; \

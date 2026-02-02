@@ -48,9 +48,9 @@ jobs:
           
           # Instalar yay manualmente
           cd /tmp
-          git clone https://aur.archlinux.org/yay.git
+          git clone https://aur.archlinux.org/yay.git >/dev/null
           cd yay
-          makepkg -si --noconfirm
+          makepkg -si --noconfirm >/dev/null
           cd "$GITHUB_WORKSPACE"
 
           # Definir rutas
@@ -64,7 +64,7 @@ jobs:
               
               echo "Construyendo: $paquete"
               # yay usará su propio cache, luego moveremos el resultado
-              yay -S --cleanafter=false --noconfirm "$paquete"
+              yay -S --cleanafter=false --noconfirm "$paquete" >/dev/null
               
               # Encontrar el paquete compilado en el cache de yay y moverlo a x86_64
               find ~/.cache/yay/"$paquete" -name "*.pkg.tar.zst" -exec cp -t "$DEST_DIR" {} +

@@ -48,6 +48,10 @@ jobs:
           
           # Instalar yay manualmente
           cd /tmp
+          sudo sed -i "s/-j[0-9]*/-j$(nproc)/" /etc/makepkg.conf
+          sudo sed -i "s/--threads=[0-9]*/--threads=$(nproc)/" /etc/makepkg.conf
+          # Desactivar generación de paquetes debug para ir más rápido
+          sudo sed -i "s/!debug/debug/" /etc/makepkg.conf # Esto suele estar invertido, asegúrate que quede !debug
           git clone https://aur.archlinux.org/yay.git &>/dev/null
           cd yay
           makepkg -si --noconfirm &>/dev/null

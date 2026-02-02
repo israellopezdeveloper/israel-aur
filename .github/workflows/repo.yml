@@ -79,93 +79,52 @@ jobs:
           chmod +x build.sh
           sudo -u builder --preserve-env=GITHUB_WORKSPACE GITHUB_WORKSPACE=$GITHUB_WORKSPACE bash ./build.sh
 
-      - name: Upload repo files
+      - name: Build AUR packages
         env:
-          UPLOAD_URL: https://kogaslife.duckdns.org/israrepo/upload.php
+          GITHUB_WORKSPACE: ${{ github.workspace }}
         run: |
-          set -e
-          echo "Subiendo ficheros de x86_64/ a ${UPLOAD_URL}"
-          THRESHOLD=$((100*1024*1024))
-          for f in x86_64/*; do
-            [ -f "$f" ] || continue
-            if [ "$(stat -c "%s" "${f}")" -lt "${THRESHOLD}" ]; then
-              continue
-            fi
-            max_retries=6
-            retry=1
-            success=0
-            while [ $retry -le $max_retries ]; do
-              echo "==> Uploading $f (attempt $retry/$max_retries)"
-              if curl -sS -X POST -F "fileToUpload=@${f}" "$UPLOAD_URL"; then
-                echo "✅ Upload succeeded for $f"
-                success=1
-                break
-              else
-                echo "❌ Upload failed for $f"
-              fi
-              retry=$((retry + 1))
-              sleep 2
-            done
-            if [ $success -ne 1 ]; then
-              echo "🚨 Upload failed after $max_retries attempts for $f"
-            fi
-            rm -rf "${f}"
+          set -euo pipefail
+          sudo -u builder --preserve-env=GITHUB_WORKSPACE GITHUB_WORKSPACE="$GITHUB_WORKSPACE" bash ./build.sh
 
-            f="${f}.sig"
-            [ -f "$f" ] || continue
-            max_retries=6
-            retry=1
-            success=0
-            while [ $retry -le $max_retries ]; do
-              echo "==> Uploading $f (attempt $retry/$max_retries)"
-              if curl -sS -X POST -F "fileToUpload=@${f}" "$UPLOAD_URL"; then
-                echo "✅ Upload succeeded for $f"
-                success=1
-                break
-              else
-                echo "❌ Upload failed for $f"
-              fi
-              retry=$((retry + 1))
-              sleep 2
-            done
-            if [ $success -ne 1 ]; then
-              echo "🚨 Upload failed after $max_retries attempts for $f"
-            fi
-            rm -rf "${f}"
-          done
       - name: Rebuild signed repo database
         env:
           REPO_NAME: israrepo
           GPG_KEYID: ${{ secrets.GPG_KEYID }}
         run: |
+          set -euo pipefail
+
           count=$(ls -1 x86_64/*.pkg.tar.zst 2>/dev/null | wc -l || true)
           if [ "$count" -eq 0 ]; then
             echo "No hay paquetes; se omite reconstrucción de la DB."
             exit 0
           fi
+
           repo-add -s -k "${GPG_KEYID}" -R \
             "x86_64/${REPO_NAME}.db.tar.gz" \
-            x86_64/*.pkg.tar.zst >/dev/null 2>log.log \
+            x86_64/*.pkg.tar.zst > /dev/null 2>log.log \
             && echo " ==> DONE!!" \
-            || {
-               echo " ==> FAILED";
-               cat log.log;
-               false;
-            }
-          rm log.log
-          rm -rf x86_64/${REPO_NAME}.db x86_64/${REPO_NAME}.files || true
+            || { echo " ==> FAILED"; cat log.log; false; }
+
+          rm -f log.log
+          rm -f "x86_64/${REPO_NAME}.db" "x86_64/${REPO_NAME}.files" || true
           cp "x86_64/${REPO_NAME}.db.tar.gz"    "x86_64/${REPO_NAME}.db"
           cp "x86_64/${REPO_NAME}.files.tar.gz" "x86_64/${REPO_NAME}.files"
+
+      - name: Generate index.html
+        run: |
+          set -euo pipefail
+
           FILES=""
-          THRESHOLD=$((100*1024*1024))
           for i in x86_64/*; do
-            if [ "$i" = "index.html" ]; then
+            [ -f "$i" ] || continue
+            if [ "$(basename "$i")" = "index.html" ]; then
               continue
             fi
             FILE_NAME="$(basename "${i}")"
             FILE_SIZE="$(stat -c "%s" "${i}" | numfmt --to=iec)"
             FILES="${FILES}<tr><td><a href=\"https://israellopezdeveloper.github.io/israel-aur/$i\">${FILE_NAME}</a></td><td>${FILE_SIZE}</td></tr>"
           done
+
           cat > x86_64/index.html <<'HTML'
           <!DOCTYPE html>
           <html lang="es">
@@ -189,7 +148,9 @@ jobs:
                     <td></td>
                   </tr>
           HTML
+
           echo "${FILES}" >> x86_64/index.html
+
           cat >> x86_64/index.html <<'HTML'
                 </tbody>
               </table>
@@ -197,12 +158,45 @@ jobs:
           </html>
           HTML
 
+      - name: Upload repo files
+        env:
+          UPLOAD_URL: https://kogaslife.duckdns.org/israrepo/upload.php
+        run: |
+          set -euo pipefail
+          echo "Subiendo ficheros de x86_64/ a ${UPLOAD_URL}"
+
+          max_retries=6
+
+          upload_one () {
+            local f="$1"
+            local retry=1
+            while [ $retry -le $max_retries ]; do
+              echo "==> Uploading $f (attempt $retry/$max_retries)"
+              if curl -sS -X POST -F "fileToUpload=@${f}" "$UPLOAD_URL"; then
+                echo "✅ Upload succeeded for $f"
+                return 0
+              fi
+              echo "❌ Upload failed for $f"
+              retry=$((retry + 1))
+              sleep 2
+            done
+            echo "🚨 Upload failed after $max_retries attempts for $f"
+            return 1
+          }
+
+          shopt -s nullglob
+          for f in x86_64/*; do
+            [ -f "$f" ] || continue
+            upload_one "$f" || true
+          done
+
       - name: Set SSH
         env:
           REPO_NAME: israrepo
           DEPLOY_KEY_PRIV: ${{ secrets.DEPLOY_KEY_PRIV }}
           DEPLOY_KEY_PUB: ${{ secrets.DEPLOY_KEY_PUB }}
         run: |
+          set -euo pipefail
           mkdir -p ~/.ssh && chmod 700 ~/.ssh
           echo "${DEPLOY_KEY_PRIV}" > ~/.ssh/id_ed25519
           echo "${DEPLOY_KEY_PUB}" > ~/.ssh/id_ed25519.pub
@@ -215,30 +209,35 @@ jobs:
           GITHUB_WORKSPACE: ${{ github.workspace }}
           GITHUB_REPOSITORY: ${{ github.repository }}
         run: |
+          set -euo pipefail
           git config --global --add safe.directory "${GITHUB_WORKSPACE}"
           echo "Workspace: ${GITHUB_WORKSPACE}"
-          ls -lisah "${GITHUB_WORKSPACE}/x86_64"
+          ls -lisah "${GITHUB_WORKSPACE}/x86_64" || true
+
           cd "${GITHUB_WORKSPACE}"
           git config --global user.name  "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
           git fetch origin gh-pages
-          # Preparamos un worktree limpio para gh-pages
           rm -rf /tmp/gh-pages
           git worktree add /tmp/gh-pages gh-pages
+
           cd /tmp/gh-pages
-          # Copiamos el contenido generado
           mkdir -p x86_64
+          rm -rf x86_64/*
           cp -r "${GITHUB_WORKSPACE}/x86_64/"* x86_64/
+
           echo "Contenido final a publicar:"
-          ls -lisah
+          ls -lisah x86_64 | sed -n '1,200p'
+
           git add .
-          # Si no hay cambios, no hacemos commit ni push
           if git diff --cached --quiet; then
             echo "No hay cambios en gh-pages; nada que commitear."
             exit 0
           fi
+
           git commit -m "Update signed repo database"
           git push origin gh-pages
-          # Limpieza opcional del worktree
+
           cd "${GITHUB_WORKSPACE}"
           git worktree remove /tmp/gh-pages --force || true

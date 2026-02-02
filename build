@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+DEST_DIR="${GITHUB_WORKSPACE}/x86_64"
+LISTA="aur_packages.txt"
+
+mkdir -p "$DEST_DIR"
+
+# Leer paquetes, ignorar vacíos y comentarios
+mapfile -t PKGS < <(grep -Ev '^\s*($|#)' "$LISTA")
+
+echo "Paquetes a construir: ${#PKGS[@]}"
+
+# timestamp para copiar SOLO lo nuevo
+start_epoch="$(date +%s)"
+
+# Construye/instala todo en un solo comando
+yay -S --needed --noconfirm --cleanafter=false "${PKGS[@]}"
+
+# CacheDir real de pacman
+PACMAN_CACHEDIR="$(pacman-conf CacheDir | head -n1 || true)"
+: "${PACMAN_CACHEDIR:=/var/cache/pacman/pkg}"
+
+echo "Copiando paquetes desde cache pacman: $PACMAN_CACHEDIR"
+
+# Copiar paquetes generados/descargados en esta ejecución
+find "$PACMAN_CACHEDIR" -maxdepth 1 -type f \
+  \( -name "*.pkg.tar.zst" -o -name "*.pkg.tar.xz" \) \
+  -newermt "@$start_epoch" -exec cp -t "$DEST_DIR" {} +
+
+echo "Paquetes copiados a $DEST_DIR:"
+ls -lah "$DEST_DIR" | sed -n '1,200p'
+

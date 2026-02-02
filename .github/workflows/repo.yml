@@ -64,7 +64,7 @@ jobs:
               
               echo "Construyendo: $paquete"
               # yay usará su propio cache, luego moveremos el resultado
-              yay -S --cleanafter=false --noconfirm "$paquete" >/dev/null
+              yay -S --cleanafter=false --noconfirm "$paquete" &>/dev/null
               
               # Encontrar el paquete compilado en el cache de yay y moverlo a x86_64
               find ~/.cache/yay/"$paquete" -name "*.pkg.tar.zst" -exec cp -t "$DEST_DIR" {} +

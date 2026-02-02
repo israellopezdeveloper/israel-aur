@@ -55,9 +55,7 @@ jobs:
             eval "printf \"=%.0s\" {1..$(((WIDTH_MAX - VAR_LENGTH)/2))}"
             echo
             sudo -u builder bash -c " \
-              git clone \"https://aur.archlinux.org/${pkg}.git\" \
-              >/dev/null 2>log.log \
-                && echo '  ==> Cloned OK' \
+              git clone \"https://aur.archlinux.org/${pkg}.git\" && echo '  ==> Cloned OK' \
                 || { \
                   echo ' ==> Cloning KO'; \
                   cat log.log; \
@@ -65,11 +63,9 @@ jobs:
                 }; \
               cd \"${pkg}\"; \
               makepkg -sf --noconfirm --skippgpcheck \
-               \
                 && echo '  ==> Created OK' \
                 || { \
                   echo '  ==> Creating KO'; \
-                  cat log.log; \
                   false; \
                 }; \
               mv *.tar.zst ..;"

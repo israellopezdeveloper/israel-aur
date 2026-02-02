@@ -182,7 +182,24 @@ jobs:
           cd /tmp/gh-pages
           mkdir -p x86_64
           rm -rf x86_64/*
-          cp -r "${GITHUB_WORKSPACE}/x86_64/"* x86_64/
+
+          max_bytes=$((100 * 1024 * 1024))  # 100MB
+
+          echo "Copiando a gh-pages solo ficheros < 100MB (${max_bytes} bytes)"
+
+          shopt -s nullglob
+          for src in "${GITHUB_WORKSPACE}/x86_64/"*; do
+            [ -f "$src" ] || continue
+            base="$(basename "$src")"
+            size="$(stat -c '%s' "$src")"
+
+            if [ "$size" -lt "$max_bytes" ]; then
+              echo "✅ + $base ($(numfmt --to=iec "$size"))"
+              cp -f "$src" "x86_64/$base"
+            else
+              echo "⏭️  - $base ($(numfmt --to=iec "$size")) [SKIP >=100MB]"
+            fi
+          done
 
           echo "Contenido final a publicar:"
           ls -lisah x86_64 | sed -n '1,200p'

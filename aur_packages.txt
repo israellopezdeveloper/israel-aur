@@ -1,5 +1,4 @@
 c-client
-php83-imap
 php83
 php83-apache
 php83-apcu

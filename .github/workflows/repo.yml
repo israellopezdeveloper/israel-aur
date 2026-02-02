@@ -48,9 +48,9 @@ jobs:
           
           # Instalar yay manualmente
           cd /tmp
-          git clone https://aur.archlinux.org/yay.git >/dev/null
+          git clone https://aur.archlinux.org/yay.git &>/dev/null
           cd yay
-          makepkg -si --noconfirm >/dev/null
+          makepkg -si --noconfirm &>/dev/null
           cd "$GITHUB_WORKSPACE"
 
           # Definir rutas

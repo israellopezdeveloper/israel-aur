@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Configurar makepkg para usar todos los núcleos
 (
   cd /tmp
   sudo sed -i "s/-j[0-9]*/-j$(nproc)/" /etc/makepkg.conf
@@ -22,23 +23,33 @@ mapfile -t PKGS < <(grep -Ev '^\s*($|#)' "$LISTA")
 
 echo "Paquetes a construir: ${#PKGS[@]}"
 
-# timestamp para copiar SOLO lo nuevo
-start_epoch="$(date +%s)"
-
-# Construye/instala todo en un solo comando
-yay -S --needed --noconfirm --cleanafter=false "${PKGS[@]}" &>/dev/null
-
 # CacheDir real de pacman
 PACMAN_CACHEDIR="$(pacman-conf CacheDir | head -n1 || true)"
 : "${PACMAN_CACHEDIR:=/var/cache/pacman/pkg}"
 
-echo "Copiando paquetes desde cache pacman: $PACMAN_CACHEDIR"
+# CacheDir de yay (donde guarda los paquetes AUR)
+YAY_CACHEDIR="${XDG_CACHE_HOME:-$HOME/.cache}/yay"
 
-# Copiar paquetes generados/descargados en esta ejecución
-find "$PACMAN_CACHEDIR" -type f \
-  \( -name "*.pkg.tar.zst" -o -name "*.pkg.tar.xz" \) \
-  -newermt "@$start_epoch" -exec cp -t "$DEST_DIR" {} +
+echo "Cache de pacman: $PACMAN_CACHEDIR"
+echo "Cache de yay: $YAY_CACHEDIR"
+
+# Construye/instala todo en un solo comando
+yay -S --needed --noconfirm --cleanafter=false "${PKGS[@]}" &>/dev/null
+
+# Copiar TODOS los paquetes de los paquetes AUR construidos
+for pkg in "${PKGS[@]}"; do
+  # Buscar en el cache de yay
+  if [ -d "$YAY_CACHEDIR" ]; then
+    find "$YAY_CACHEDIR" -type f \
+      \( -name "*.pkg.tar.zst" -o -name "*.pkg.tar.xz" \) \
+      -path "*/$pkg/*" -exec cp -t "$DEST_DIR" {} + 2>/dev/null || true
+  fi
+  
+  # También buscar en el cache de pacman
+  find "$PACMAN_CACHEDIR" -type f \
+    \( -name "*.pkg.tar.zst" -o -name "*.pkg.tar.xz" \) \
+    -name "*$pkg*" -exec cp -t "$DEST_DIR" {} + 2>/dev/null || true
+done
 
 echo "Paquetes copiados a $DEST_DIR:"
 ls -lah "$DEST_DIR" | sed -n '1,200p'
-

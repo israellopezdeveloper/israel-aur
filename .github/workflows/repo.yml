@@ -41,7 +41,7 @@ jobs:
           GITHUB_WORKSPACE: ${{ github.workspace }}
         run: |
           set -euo pipefail
-          sudo -u builder --preserve-env=GITHUB_WORKSPACE GITHUB_WORKSPACE="$GITHUB_WORKSPACE" bash ./build.sh
+          sudo -u builder --preserve-env=GITHUB_WORKSPACE GITHUB_WORKSPACE="$GITHUB_WORKSPACE" bash ./build
 
       - name: Rebuild signed repo database
         env:

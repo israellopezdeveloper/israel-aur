@@ -36,49 +36,6 @@ jobs:
           echo "builder ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
           chown -R builder:builder .
 
-      - name: Sign any unsigned packages
-        env:
-          GPG_KEYID: ${{ secrets.GPG_KEYID }}
-          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
-        run: |
-          # 1. Preparar el script de compilación
-          cat << 'EOF' > build.sh
-          #!/bin/bash
-          set -e
-          
-          # Instalar yay manualmente
-          cd /tmp
-          sudo sed -i "s/-j[0-9]*/-j$(nproc)/" /etc/makepkg.conf
-          sudo sed -i "s/--threads=[0-9]*/--threads=$(nproc)/" /etc/makepkg.conf
-          # Desactivar generación de paquetes debug para ir más rápido
-          sudo sed -i "s/!debug/debug/" /etc/makepkg.conf # Esto suele estar invertido, asegúrate que quede !debug
-          git clone https://aur.archlinux.org/yay.git &>/dev/null
-          cd yay
-          makepkg -si --noconfirm &>/dev/null
-          cd "$GITHUB_WORKSPACE"
-
-          # Definir rutas
-          DEST_DIR="${GITHUB_WORKSPACE}/x86_64"
-          LISTA="aur_packages.txt"
-          mkdir -p "$DEST_DIR"
-
-          # Procesar lista
-          while IFS= read -r paquete || [[ -n "$paquete" ]]; do
-              [[ -z "$paquete" || "$paquete" =~ ^# ]] && continue
-              
-              echo "Construyendo: $paquete"
-              # yay usará su propio cache, luego moveremos el resultado
-              yay -S --cleanafter=false --noconfirm "$paquete" &>/dev/null
-              
-              # Encontrar el paquete compilado en el cache de yay y moverlo a x86_64
-              find ~/.cache/yay/"$paquete" -name "*.pkg.tar.zst" -exec cp -t "$DEST_DIR" {} +
-          done < "$LISTA"
-          EOF
-
-          # 2. Dar permisos y ejecutar como builder
-          chmod +x build.sh
-          sudo -u builder --preserve-env=GITHUB_WORKSPACE GITHUB_WORKSPACE=$GITHUB_WORKSPACE bash ./build.sh
-
       - name: Build AUR packages
         env:
           GITHUB_WORKSPACE: ${{ github.workspace }}

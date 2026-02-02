@@ -34,7 +34,7 @@ echo "Cache de pacman: $PACMAN_CACHEDIR"
 echo "Cache de yay: $YAY_CACHEDIR"
 
 # Construye/instala todo en un solo comando
-yay -S --nocheck --mflags "--skipinteg" --needed --noconfirm --cleanafter=false "${PKGS[@]}"
+yay -S --mflags "--nocheck --skipinteg" --needed --noconfirm --cleanafter=false "${PKGS[@]}"
 
 # Copiar TODOS los paquetes de los paquetes AUR construidos
 for pkg in "${PKGS[@]}"; do

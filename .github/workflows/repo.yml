@@ -41,47 +41,39 @@ jobs:
           GPG_KEYID: ${{ secrets.GPG_KEYID }}
           GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
         run: |
-          any=0
-          CURR_DIR="$(pwd)"
-          AUR_PACKAGES=$(cat aur_packages.txt)
+          # 1. Preparar el script de compilación
+          cat << 'EOF' > build.sh
+          #!/bin/bash
+          set -e
+          
+          # Instalar yay manualmente
           cd /tmp
           git clone https://aur.archlinux.org/yay.git
           cd yay
           makepkg -si --noconfirm
-          cd ..
-          rm -rf yay
+          cd "$GITHUB_WORKSPACE"
 
-          # 2. Definir rutas
-          CURR_DIR=$(pwd)
-          DEST_DIR="${CURR_DIR}/x86_64"
+          # Definir rutas
+          DEST_DIR="${GITHUB_WORKSPACE}/x86_64"
           LISTA="aur_packages.txt"
-
           mkdir -p "$DEST_DIR"
 
-          # 3. Procesar la lista de paquetes
-          if [[ -f "$LISTA" ]]; then
-              while IFS= read -r paquete || [[ -n "$paquete" ]]; do
-                  # Saltarse líneas vacías o comentarios
-                  [[ -z "$paquete" || "$paquete" =~ ^# ]] && continue
+          # Procesar lista
+          while IFS= read -r paquete || [[ -n "$paquete" ]]; do
+              [[ -z "$paquete" || "$paquete" =~ ^# ]] && continue
+              
+              echo "Construyendo: $paquete"
+              # yay usará su propio cache, luego moveremos el resultado
+              yay -S --cleanafter=false --noconfirm "$paquete"
+              
+              # Encontrar el paquete compilado en el cache de yay y moverlo a x86_64
+              find ~/.cache/yay/"$paquete" -name "*.pkg.tar.zst" -exec cp -t "$DEST_DIR" {} +
+          done < "$LISTA"
+          EOF
 
-                  echo "------------------------------------------"
-                  echo "Compilando y guardando: $paquete"
-                  echo "------------------------------------------"
-
-                  # --builddir: compila en la carpeta destino
-                  # --cleanafter=false: mantiene el archivo .pkg.tar.zst
-                  yay -S --builddir "$DEST_DIR" --cleanafter=false --noconfirm "$paquete"
-
-                  # Mover el archivo compilado a la raíz de /x86_64 para que no quede oculto en subcarpetas
-                  find "$DEST_DIR/$paquete" -name "*.pkg.tar.zst" -exec mv -t "$DEST_DIR" {} + 2>/dev/null
-                  
-                  # Opcional: Borrar la carpeta de compilación sobrante para dejar solo el binario
-                  rm -rf "$DEST_DIR/$paquete"
-                  
-              done < "$LISTA"
-          else
-              echo "Error: No se encontró el archivo $LISTA"
-          fi
+          # 2. Dar permisos y ejecutar como builder
+          chmod +x build.sh
+          sudo -u builder --preserve-env=GITHUB_WORKSPACE GITHUB_WORKSPACE=$GITHUB_WORKSPACE bash ./build.sh
 
       - name: Upload repo files
         env:

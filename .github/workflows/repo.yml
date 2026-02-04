@@ -67,6 +67,7 @@ jobs:
           cp "x86_64/${REPO_NAME}.db.tar.gz"    "x86_64/${REPO_NAME}.db"
           cp "x86_64/${REPO_NAME}.files.tar.gz" "x86_64/${REPO_NAME}.files"
 
+
       - name: Generate index.html
         run: |
           set -euo pipefail

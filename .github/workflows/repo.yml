@@ -142,7 +142,7 @@ jobs:
           }
 
           shopt -s nullglob
-          for f in x86_64/*; do
+          for f in big/*; do
             [ -f "$f" ] || continue
             upload_one "$f" || true
           done

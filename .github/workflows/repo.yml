@@ -117,7 +117,7 @@ jobs:
 
       - name: Upload repo files
         env:
-          UPLOAD_URL: https://kogaslife.duckdns.org/israrepo/upload.php
+          UPLOAD_URL: https://kogaslife.duckdns.org/israel-aur/upload.php
         run: |
           set -euo pipefail
           echo "Subiendo ficheros de x86_64/ a ${UPLOAD_URL}"

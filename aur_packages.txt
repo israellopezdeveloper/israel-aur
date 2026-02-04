@@ -46,7 +46,6 @@ ruby-neovim
 shellcheck-bin
 solidity-bin
 solidity-language-server
-st
 upwork-beta
 vscode-langservers-extracted
 wlogout

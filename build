@@ -36,6 +36,9 @@ echo "Cache de yay: $YAY_CACHEDIR"
 # Construye/instala todo en un solo comando
 yay -S --mflags "--nocheck --skipinteg" --needed --noconfirm --cleanafter=false "${PKGS[@]}"
 
+find "$DEST_DIR" -type f \
+  \( -name "*.pkg.tar.zst" -o -name "*.pkg.tar.xz" \) \
+  -size +100M -print -delete
 # Copiar TODOS los paquetes de los paquetes AUR construidos
 for pkg in "${PKGS[@]}"; do
   # Buscar en el cache de yay

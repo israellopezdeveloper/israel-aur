@@ -56,7 +56,7 @@ jobs:
             exit 0
           fi
 
-          repo-echo "==> Signing packages (.sig)..."
+          echo "==> Signing packages (.sig)..."
           for pkg in "${pkgs[@]}"; do
             sig="${pkg}.sig"
 
@@ -70,7 +70,8 @@ jobs:
               "$pkg"
           done
 
-          echo "==> Building & signing repo database..."add -s -k "${GPG_KEYID}" -R \
+          echo "==> Building & signing repo database..."
+          repo-add -s -k "${GPG_KEYID}" -R \
             "x86_64/${REPO_NAME}.db.tar.gz" \
             x86_64/*.pkg.tar.zst > /dev/null 2>log.log \
             && echo " ==> DONE!!" \

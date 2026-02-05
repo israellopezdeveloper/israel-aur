@@ -56,7 +56,21 @@ jobs:
             exit 0
           fi
 
-          repo-add -s --detach-sign -k "${GPG_KEYID}" -R \
+          repo-echo "==> Signing packages (.sig)..."
+          for pkg in "${pkgs[@]}"; do
+            sig="${pkg}.sig"
+
+            # Si ya existe firma, la regeneramos (evita firmas antiguas/rotas)
+            rm -f "$sig"
+
+            gpg --batch --yes \
+              --local-user "${GPG_KEYID}" \
+              --detach-sign --armor \
+              --output "$sig" \
+              "$pkg"
+          done
+
+          echo "==> Building & signing repo database..."add -s -k "${GPG_KEYID}" -R \
             "x86_64/${REPO_NAME}.db.tar.gz" \
             x86_64/*.pkg.tar.zst > /dev/null 2>log.log \
             && echo " ==> DONE!!" \

@@ -58,3 +58,4 @@ find "$DEST_DIR" -type f \
   -size +100M -print -exec mv {} "$BIG_DIR" \;
 echo "Paquetes copiados a $DEST_DIR:"
 ls -lah "$DEST_DIR" | sed -n '1,200p'
+

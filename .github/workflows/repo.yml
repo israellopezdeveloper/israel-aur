@@ -56,19 +56,23 @@ jobs:
             exit 0
           fi
 
-          echo "==> Signing packages (.sig)..."
-          for pkg in "${pkgs[@]}"; do
-            sig="${pkg}.sig"
+          (
+            cd x86_64
+            echo "==> Signing packages (.sig)..."
+            for pkg in *.pkg.tar.zst; do
+              sig="${pkg}.sig"
 
-            # Si ya existe firma, la regeneramos (evita firmas antiguas/rotas)
-            rm -f "$sig"
+              # Si ya existe firma, la regeneramos (evita firmas antiguas/rotas)
+              rm -f "$sig"
 
-            gpg --batch --yes \
-              --local-user "${GPG_KEYID}" \
-              --detach-sign --armor \
-              --output "$sig" \
-              "$pkg"
-          done
+              gpg --batch --yes \
+                --local-user "${GPG_KEYID}" \
+                --detach-sign --armor \
+                --output "$sig" \
+                "$pkg"
+            done
+            cd ..
+          )
 
           echo "==> Building & signing repo database..."
           repo-add -s -k "${GPG_KEYID}" -R \

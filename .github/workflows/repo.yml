@@ -67,7 +67,7 @@ jobs:
 
               gpg --batch --yes \
                 --local-user "${GPG_KEYID}" \
-                --detach-sign --armor \
+                --detach-sign \
                 --output "$sig" \
                 "$pkg"
             done

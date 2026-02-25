@@ -8,7 +8,7 @@ on:
 
 jobs:
   regenerating-repo:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted,arch, pkgbuild]
     permissions:
       contents: write
     container:
